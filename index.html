@@ -129,6 +129,16 @@
         font-size: 11px;
         z-index: 10;
     }
+    
+    #creator-info {
+        position: fixed;
+        left: 220px;  /* Position it to the right of version info */
+        bottom: 10px;
+        color: rgba(255, 255, 255, 0.5);
+        font-family: monospace;
+        font-size: 11px;
+        z-index: 10;
+    }
     #plotTitle {
       position: fixed !important;
       top: 10px !important;
@@ -207,18 +217,18 @@
 
       <div class="control-group">
         <label>Particle Count (100–1000)</label>
-        <div class="slider-container" data-min="100" data-max="1000" data-step="1" data-value="200" id="densitySlider">
+        <div class="slider-container" data-min="100" data-max="500" data-step="1" data-value="250" id="densitySlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="densitySliderValue">200.00</div>
+        <div class="slider-value" id="densitySliderValue">250.00</div>
       </div>
 
       <div class="control-group">
         <label>Particle Generation Rate (per sec)</label>
-        <div class="slider-container" data-min="0" data-max="500" data-step="1" data-value="60" id="genRateSlider">
+        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="30" id="genRateSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="genRateSliderValue">60.00</div>
+        <div class="slider-value" id="genRateSliderValue">30.00</div>
       </div>
 
       <div class="control-group">
@@ -239,10 +249,10 @@
 
       <div class="control-group">
         <label>Motion Trail Length</label>
-        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="20" id="trailLengthSlider">
+        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="18" id="trailLengthSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="trailLengthSliderValue">20.00</div>
+        <div class="slider-value" id="trailLengthSliderValue">18.00</div>
       </div>
 
       <div class="control-group">
@@ -258,7 +268,8 @@
   <div id="plotTitle">ACE Near Real Time Data Stream</div>
   <canvas id="plotCanvas"></canvas>
   <div id="debug"></div>
-  <div id="version-info">NOAA ACE Particle Visualization Demo v1.0</div>
+  <div id="version-info">NOAA ACE Particle Visualization</div>
+  <div id="creator-info">Created by Robert Alexander: robert@auralab.io</div>
 
 <script>
 // ---------- Custom Slider Functions (Reusable) ----------
@@ -933,6 +944,28 @@ document.getElementById("modeBtn").addEventListener("click", () => {
     document.getElementById("modeBtn").textContent = 'Stream All';
   }
 });
+
+// Add this function near the other GUI fade functions
+function handleClickOutside(event) {
+    const gui = document.getElementById('gui');
+    if (gui.classList.contains('fade-out')) {
+        // If controls are hidden, show them (unless clicking on controls)
+        if (!gui.contains(event.target)) {
+            resetGuiFade();
+        }
+    } else {
+        // If controls are visible, hide them when clicking outside
+        if (!gui.contains(event.target)) {
+            gui.classList.add('fade-out');
+            if (guiTimeout) {
+                clearTimeout(guiTimeout);
+            }
+        }
+    }
+}
+
+// Add this to the existing event listeners
+document.addEventListener('click', handleClickOutside);
 </script>
 </body>
 </html>
