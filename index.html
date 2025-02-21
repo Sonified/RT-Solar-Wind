@@ -31,7 +31,7 @@
       border-radius: 10px;
       display: flex;
       flex-direction: column;
-      transition: opacity 0.5s ease-in-out;
+      transition: opacity 0.8s ease-in-out;
     }
     #gui.fade-out {
       opacity: 0;
@@ -112,7 +112,7 @@
       max-height: 200px;
       overflow: auto;
       z-index: 20;
-      transition: opacity 0.5s ease-in-out;
+      transition: opacity 0.8s ease-in-out;
     }
 
     /* Add fade-out behavior for debug window */
@@ -908,7 +908,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 });
 
 let guiTimeout;
-const GUI_FADE_DELAY = 3000; // 3 seconds
+const GUI_FADE_DELAY = 2500; // 2.5 seconds
 
 function resetGuiFade() {
     const gui = document.getElementById('gui');
