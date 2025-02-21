@@ -360,7 +360,7 @@ let temperatureHistory = [];
 const maxHistory = 200;
 const plotColors = {
   "Bx": "#0cf", "By": "#fc0", "Bz": "#f0c",
-  "Velocity": "#0f0", "Density": "#ff0", "Temp": "#f0f"
+  "Vel": "#0f0", "Dens": "#ff0", "Temp": "#f0f"
 };
 
 // Add these global variables
@@ -582,8 +582,8 @@ function updatePlots() {
   drawPlot(ctx, bxHistory, 0, 0 * (plotHeight + gap), canvas.width, plotHeight, "Bx");
   drawPlot(ctx, byHistory, 0, 1 * (plotHeight + gap), canvas.width, plotHeight, "By");
   drawPlot(ctx, bzHistory, 0, 2 * (plotHeight + gap), canvas.width, plotHeight, "Bz");
-  drawPlot(ctx, speedHistory, 0, 3 * (plotHeight + gap), canvas.width, plotHeight, "Velocity");
-  drawPlot(ctx, densityHistory, 0, 4 * (plotHeight + gap), canvas.width, plotHeight, "Density");
+  drawPlot(ctx, speedHistory, 0, 3 * (plotHeight + gap), canvas.width, plotHeight, "Vel");
+  drawPlot(ctx, densityHistory, 0, 4 * (plotHeight + gap), canvas.width, plotHeight, "Dens");
   drawPlot(ctx, temperatureHistory, 0, 5 * (plotHeight + gap), canvas.width, plotHeight, "Temp");
 }
 
@@ -610,7 +610,10 @@ function drawPlot(ctx, dataArray, x, y, w, h, label) {
 
   ctx.fillStyle = plotColors[label] || "white";
   ctx.font = "12px sans-serif";
-  ctx.fillText(`${label}: ${dataArray[dataArray.length-1].toFixed(2)}`, x + 5, y + 15);
+  ctx.textAlign = "right";  // Right-align the text
+  let value = dataArray[dataArray.length-1];
+  let text = `${label}: ${label === "Temp" ? value.toFixed(0) : value.toFixed(2)}`;
+  ctx.fillText(text, x + w - 5, y + 15);
 }
 
 // ---------- Particle Management ----------
