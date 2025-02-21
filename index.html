@@ -867,7 +867,7 @@ function draw() {
 
     let dbgText = "Frame: " + frameCount + "<br>" +
         "Record: " + floor(currentRecordIndex) + " / " + totalRecords + "<br>" +
-        "Date/Time: " + simDateStr + " (UT)<br>" +
+        "Date/Time: " + simDateStr + " (UTC)<br>" +
         "Bx, By, Bz: " + ((magRecords.length > 0 && magRecords[floor(currentRecordIndex)]) ?
             magRecords[floor(currentRecordIndex)].Bx.toFixed(2) + ", " +
             magRecords[floor(currentRecordIndex)].By.toFixed(2) + ", " +
