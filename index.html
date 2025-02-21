@@ -590,44 +590,62 @@ function updateParticles() {
 }
 
 // ---------- p5.js Functions ----------
-function preload() {
+async function preload() {
   clog("Preloading data files...");
-  
-  // Function to fetch data with retry logic
-  function fetchDataWithRetry(url, parseFunction, dataRawVar, recordsVar) {
-    fetch(url)
-      .then(response => response.text())
-      .then(text => {
-        window[dataRawVar] = text.split('\n');
-        window[recordsVar] = parseFunction(window[dataRawVar]);
-        clog(`Loaded ${url}`);
-      })
-      .catch(() => {
-        // Retry every 5 seconds if the initial fetch fails
-        setTimeout(() => fetchDataWithRetry(url, parseFunction, dataRawVar, recordsVar), 5000);
-      });
+  try {
+    // Wait for both files to load
+    const [magResponse, swepamResponse] = await Promise.all([
+      fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt'),
+      fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
+    ]);
+
+    // Get the text from both responses
+    const [magText, swepamText] = await Promise.all([
+      magResponse.text(),
+      swepamResponse.text()
+    ]);
+
+    // Parse the data
+    magDataRaw = magText.split('\n');
+    swepamDataRaw = swepamText.split('\n');
+    
+    // Parse records immediately
+    magRecords = parseMagData(magDataRaw);
+    swepamRecords = parseSWEData(swepamDataRaw);
+    
+    // Update total records
+    totalRecords = Math.min(magRecords.length, swepamRecords.length);
+    
+    // Find first valid record
+    for (let i = 0; i < magRecords.length; i++) {
+      if (magRecords[i].Bx !== -999.9) {
+        currentRecordIndex = i;
+        break;
+      }
+    }
+
+    // Set up auto-refresh
+    setInterval(async () => {
+      const [newMagResponse, newSwepamResponse] = await Promise.all([
+        fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt'),
+        fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
+      ]);
+      
+      const [newMagText, newSwepamText] = await Promise.all([
+        newMagResponse.text(),
+        newSwepamResponse.text()
+      ]);
+
+      magDataRaw = newMagText.split('\n');
+      swepamDataRaw = newSwepamText.split('\n');
+      magRecords = parseMagData(magDataRaw);
+      swepamRecords = parseSWEData(swepamDataRaw);
+      totalRecords = Math.min(magRecords.length, swepamRecords.length);
+    }, 60000);
+
+  } catch (error) {
+    clog("Error in preload:", error);
   }
-
-  // Initial data fetch with retry logic
-  fetchDataWithRetry('https://services.swpc.noaa.gov/text/ace-magnetometer.txt', parseMagData, 'magDataRaw', 'magRecords');
-  fetchDataWithRetry('https://services.swpc.noaa.gov/text/ace-swepam.txt', parseSWEData, 'swepamDataRaw', 'swepamRecords');
-
-  // Set up periodic refresh every minute
-  setInterval(() => {
-    fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt')
-      .then(response => response.text())
-      .then(text => {
-        magDataRaw = text.split('\n');
-        magRecords = parseMagData(magDataRaw);
-      });
-
-    fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
-      .then(response => response.text())
-      .then(text => {
-        swepamDataRaw = text.split('\n');
-        swepamRecords = parseSWEData(swepamDataRaw);
-      });
-  }, 60000);  // 60000ms = 1 minute
 }
 
 function setup() {
