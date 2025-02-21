@@ -592,8 +592,37 @@ function updateParticles() {
 // ---------- p5.js Functions ----------
 function preload() {
   clog("Preloading data files...");
-  magDataRaw = loadStrings("ace-magnetometer.txt", () => { clog("Loaded ace-magnetometer.txt"); });
-  swepamDataRaw = loadStrings("ace-swepam.txt", () => { clog("Loaded ace-swepam.txt"); });
+  // Instead of loadStrings from local files, fetch from NOAA
+  fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt')
+    .then(response => response.text())
+    .then(text => {
+      magDataRaw = text.split('\n');
+      clog("Loaded ace-magnetometer.txt");
+    });
+    
+  fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
+    .then(response => response.text())
+    .then(text => {
+      swepamDataRaw = text.split('\n');
+      clog("Loaded ace-swepam.txt");
+    });
+
+  // Set up periodic refresh every minute
+  setInterval(() => {
+    fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt')
+      .then(response => response.text())
+      .then(text => {
+        magDataRaw = text.split('\n');
+        magRecords = parseMagData(magDataRaw);
+      });
+
+    fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
+      .then(response => response.text())
+      .then(text => {
+        swepamDataRaw = text.split('\n');
+        swepamRecords = parseSWEData(swepamDataRaw);
+      });
+  }, 60000);  // 60000ms = 1 minute
 }
 
 function setup() {
