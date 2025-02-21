@@ -217,18 +217,18 @@
 
       <div class="control-group">
         <label>Particle Count</label>
-        <div class="slider-container" data-min="100" data-max="500" data-step="1" data-value="250" id="densitySlider">
+        <div class="slider-container" data-min="100" data-max="500" data-step="1" data-value="220" id="densitySlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="densitySliderValue">250</div>
+        <div class="slider-value" id="densitySliderValue">220</div>
       </div>
 
       <div class="control-group">
         <label>Base Generation Rate</label>
-        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="28" id="genRateSlider">
+        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="22" id="genRateSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="genRateSliderValue">28/s</div>
+        <div class="slider-value" id="genRateSliderValue">22/s</div>
       </div>
 
       <div class="control-group">
@@ -249,10 +249,10 @@
 
       <div class="control-group">
         <label>Motion Trail Length</label>
-        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="15" id="trailLengthSlider">
+        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="12" id="trailLengthSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="trailLengthSliderValue">15</div>
+        <div class="slider-value" id="trailLengthSliderValue">12</div>
       </div>
 
       <div class="control-group">
@@ -645,13 +645,13 @@ function updateParticles() {
         currentTime - time < RATE_WINDOW
     );
 
-    // Scale only generation rate by solar wind density
-    let scaledGenRate = particleGenRate * simDensity;
+    // Using base generation rate without density scaling
+    // (Removed: let scaledGenRate = particleGenRate * simDensity;)
     
     // Only generate if under BOTH limits
     if (particleGenRate > 0 && 
         particles.length < densityFactor && 
-        particlesCreatedTimes.length < scaledGenRate) {
+        particlesCreatedTimes.length < particleGenRate) {
         
         particles.push(new Particle(travelDistance));
         particlesCreatedTimes.push(currentTime);
