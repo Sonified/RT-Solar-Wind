@@ -31,6 +31,15 @@
       border-radius: 10px;
       display: flex;
       flex-direction: column;
+      transition: opacity 0.5s ease-in-out;
+    }
+    #gui.fade-out {
+      opacity: 0;
+      pointer-events: none;  /* Prevents interaction while faded out */
+    }
+    #gui:hover {
+      opacity: 1;
+      pointer-events: auto;
     }
     #controlsContainer h2 { 
       margin-top: 0;
@@ -78,12 +87,12 @@
     button:hover { background: #09a; }
     #plotCanvas {
       position: fixed !important;
-      top: 20px !important;
+      top: 25px !important;
       right: 20px !important;
       left: auto !important;
       width: 300px;
       height: 300px;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.7);
       border: 2px solid #0cf;
       border-radius: 5px;
       z-index: 10;
@@ -103,6 +112,13 @@
       max-height: 200px;
       overflow: auto;
       z-index: 20;
+      transition: opacity 0.5s ease-in-out;
+    }
+
+    /* Add fade-out behavior for debug window */
+    #gui.fade-out ~ #debug {
+      opacity: 0;
+      pointer-events: none;
     }
     #version-info {
         position: fixed;
@@ -112,6 +128,17 @@
         font-family: monospace;
         font-size: 11px;
         z-index: 10;
+    }
+    #plotTitle {
+      position: fixed !important;
+      top: 10px !important;
+      right: 20px !important;
+      color: #0cf;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      z-index: 10;
+      text-align: center;
+      width: 300px;
     }
   </style>
   <script src="p5.min.js"></script>
@@ -123,6 +150,12 @@
       <button id="playBtn">Play</button>
       <button id="pauseBtn">Pause</button>
       <button id="resetBtn">Reset</button>
+
+      <div class="control-group">
+        <label>Mode: <button id="modeBtn" style="width: auto; padding: 2px 8px; margin: 0 0 0 8px;">Stream All</button></label>
+      </div>
+
+      <div style="height: 10px;"></div>  <!-- Add spacing -->
 
       <div class="control-group">
         <label>Data Rate</label>
@@ -157,7 +190,7 @@
       </div>
 
       <div class="control-group">
-        <label>Velocity Sensitivity (%)</label>
+        <label>Magnetic Field Sensitivity (%)</label>
         <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="100" id="velocitySensitivitySlider">
           <div class="slider-fill"></div>
         </div>
@@ -169,15 +202,15 @@
         <div class="slider-container" data-min="1" data-max="20" data-step="1" data-value="15" id="sizeSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="sizeSliderValue">10.00</div>
+        <div class="slider-value" id="sizeSliderValue">15.00</div>
       </div>
 
       <div class="control-group">
         <label>Particle Count (100–1000)</label>
-        <div class="slider-container" data-min="100" data-max="1000" data-step="1" data-value="500" id="densitySlider">
+        <div class="slider-container" data-min="100" data-max="1000" data-step="1" data-value="200" id="densitySlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="densitySliderValue">500.00</div>
+        <div class="slider-value" id="densitySliderValue">200.00</div>
       </div>
 
       <div class="control-group">
@@ -190,10 +223,10 @@
 
       <div class="control-group">
         <label>Travel Distance</label>
-        <div class="slider-container" data-min="1000" data-max="5000" data-step="100" data-value="3000" id="travelSlider">
+        <div class="slider-container" data-min="1000" data-max="5000" data-step="100" data-value="3500" id="travelSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="travelSliderValue">3000.00</div>
+        <div class="slider-value" id="travelSliderValue">3500.00</div>
       </div>
 
       <div class="control-group">
@@ -201,23 +234,31 @@
         <div class="slider-container" data-min="1" data-max="5" data-step="0.1" data-value="3" id="spawnSizeSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="spawnSizeSliderValue">2.00</div>
+        <div class="slider-value" id="spawnSizeSliderValue">3.00</div>
       </div>
 
       <div class="control-group">
         <label>Motion Trail Length</label>
-        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="15" id="trailLengthSlider">
+        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="20" id="trailLengthSlider">
           <div class="slider-fill"></div>
         </div>
-        <div class="slider-value" id="trailLengthSliderValue">10.00</div>
+        <div class="slider-value" id="trailLengthSliderValue">20.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Fade In Time (seconds)</label>
+        <div class="slider-container" data-min="0.5" data-max="5" data-step="0.1" data-value="2.0" id="fadeInTimeSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="fadeInTimeSliderValue">2.00</div>
       </div>
     </div>
-
-    <canvas id="plotCanvas"></canvas>
-    <div id="debug"></div>
-    <div id="version-info">NOAA ACE Particle Visualization Demo v1.0</div>
   </div>
 
+  <div id="plotTitle">ACE Near Real Time Data Stream</div>
+  <canvas id="plotCanvas"></canvas>
+  <div id="debug"></div>
+  <div id="version-info">NOAA ACE Particle Visualization Demo v1.0</div>
 
 <script>
 // ---------- Custom Slider Functions (Reusable) ----------
@@ -316,6 +357,7 @@ let minTemp, maxTemp;
 let spawnAreaSize;
 let particlesCreatedTimes = []; // Array to track ALL particle creations (new OR respawn)
 const RATE_WINDOW = 1000; // 1 second window for rate limiting
+let streamMode = 'all'; // 'all' or 'recent'
 
 // ---------- Utility Functions ----------
 function clog(...args) {
@@ -404,7 +446,7 @@ class Particle {
     this.lastRespawnTime = millis(); // Add this to track respawn timing
   }
 
-  update(dir, speed, relSpeed, speedSens, velSens) {
+  update(dir, speed, relSpeed, speedSens, magFieldSens) {
       // Store current position in trail before updating
       this.trail.push(this.pos.copy());
       
@@ -414,13 +456,17 @@ class Particle {
           this.trail.shift();
       }
 
-      // Existing update code
+      // Calculate alpha based on fade in time
+      let fadeInTime = getSliderValue("fadeInTimeSlider") * 1000; // Convert to milliseconds
+      let timeSinceBirth = millis() - this.birthTime;
+      this.alpha = map(timeSinceBirth, 0, fadeInTime, 0, 255);
+      this.alpha = constrain(this.alpha, 0, 255);
+
+      // Remove the direction update from here - only use birthDir
       this.baseVel = createVector(0, 0, relSpeed * 10);
       this.dataVel = this.birthDir.copy().mult(this.birthSpeed * speedSens * 0.05);
-      this.vel = p5.Vector.lerp(this.baseVel, this.dataVel.add(this.baseVel), velSens);
+      this.vel = p5.Vector.lerp(this.baseVel, this.dataVel.add(this.baseVel), magFieldSens);
       this.pos.add(this.vel);
-      this.alpha += 2;
-      this.alpha = constrain(this.alpha, 0, 255);
 
       if (this.pos.z > 0) {
           let currentTime = millis();
@@ -451,7 +497,7 @@ class Particle {
       this.alpha = 0;
       this.birthTime = millis();
       this.birthTemp = simTemperature;
-      this.birthDir = currentDir.copy();
+      this.birthDir = currentDir.copy();  // Update direction on reset
       this.birthSpeed = currentSpeed;
       
       // Clear the trail on reset
@@ -490,7 +536,7 @@ class Particle {
         
         if (temp < midTemp) {
             col = lerpColor(
-                color(255, 0, 0),    // Red for coldest
+                color(139, 0, 0),    // Dark red for coldest (using RGB values)
                 color(0, 0, 255),    // Blue for middle
                 map(temp, minTemp, midTemp, 0, 1)
             );
@@ -688,7 +734,7 @@ function setup() {
   // Instead of creating all particles at once, start with an empty array
   particles = [];
 
-    // Initialize sliders.  Must happen after createCanvas.
+    // Initialize sliders
     initSlider("dataRateSlider");
     initSlider("relSpeedSlider");
     initSlider("speedSensitivitySlider");
@@ -700,6 +746,7 @@ function setup() {
     initSlider("genRateSlider");
     initSlider("spawnSizeSlider");
     initSlider("trailLengthSlider");
+    initSlider("fadeInTimeSlider");
 }
 
 
@@ -762,8 +809,23 @@ function draw() {
 
   // Advance record index (if playing)
   if (playing && totalRecords > 0) {
-    currentRecordIndex += dataRate / 60.0; // Assuming ~60fps
-    if (currentRecordIndex >= totalRecords) currentRecordIndex = 0;
+    if (streamMode === 'all') {
+      currentRecordIndex += dataRate / 60.0; // Assuming ~60fps
+      if (currentRecordIndex >= totalRecords) currentRecordIndex = 0;
+    } else {
+      // Find most recent valid data point
+      let idx = totalRecords - 1;
+      while (idx > 0 && 
+             (magRecords[idx].Bx === -999.9 || 
+              magRecords[idx].By === -999.9 || 
+              magRecords[idx].Bz === -999.9 || 
+              swepamRecords[idx].bulkSpeed === -9999.9 || 
+              swepamRecords[idx].protonDensity === -9999.9 || 
+              swepamRecords[idx].ionTemp === -1.00e+05)) {
+        idx--;
+      }
+      currentRecordIndex = idx;
+    }
   }
 
   // Update and draw particles with rate-limited respawning
@@ -794,7 +856,7 @@ function draw() {
 
     let dbgText = "Frame: " + frameCount + "<br>" +
         "Record: " + floor(currentRecordIndex) + " / " + totalRecords + "<br>" +
-        "Date/Time: " + simDateStr + "<br>" +
+        "Date/Time: " + simDateStr + " (UT)<br>" +
         "Bx, By, Bz: " + ((magRecords.length > 0 && magRecords[floor(currentRecordIndex)]) ?
             magRecords[floor(currentRecordIndex)].Bx.toFixed(2) + ", " +
             magRecords[floor(currentRecordIndex)].By.toFixed(2) + ", " +
@@ -803,9 +865,9 @@ function draw() {
         "Density: " + simDensity.toFixed(2) + "<br>" +
         "Ion Temp: " + simTemperature.toFixed(2) + "<br>" +
         "Data Rate: " + dataRate.toFixed(2) + " rec/sec, Rel Speed: " + relSpeed.toFixed(2) + "<br>" +
-        "Speed Sens: " + (speedSensitivity * 100).toFixed(0) + "%, Vel Sens: " + (velocitySensitivity*100).toFixed(0) + "%<br>"+
+        "Speed Sens: " + (speedSensitivity * 100).toFixed(0) + "%, Mag Field Sens: " + (velocitySensitivity*100).toFixed(0) + "%<br>"+
         "Smoothing: " + smoothingFactor.toFixed(2) + ", Particle Size: " + particleSize.toFixed(2) + "<br>" +
-        "Density Factor: " + densityFactor.toFixed(2) + ", Travel Dist: " + travelDistance.toFixed(0) + "<br>";
+        "Particle Count: " + densityFactor.toFixed(2) + ", Travel Dist: " + travelDistance.toFixed(0) + "<br>";
 
     document.getElementById("debug").innerHTML = dbgText;
 }
@@ -834,6 +896,43 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   currentTemperature = 30000;
 });
 
+let guiTimeout;
+const GUI_FADE_DELAY = 3000; // 3 seconds
+
+function resetGuiFade() {
+    const gui = document.getElementById('gui');
+    gui.classList.remove('fade-out');
+    
+    // Clear existing timeout
+    if (guiTimeout) {
+        clearTimeout(guiTimeout);
+    }
+    
+    // Set new timeout
+    guiTimeout = setTimeout(() => {
+        if (!gui.matches(':hover')) { // Only fade if not being hovered
+            gui.classList.add('fade-out');
+        }
+    }, GUI_FADE_DELAY);
+}
+
+// Add event listeners
+document.addEventListener('mousemove', resetGuiFade);
+document.getElementById('gui').addEventListener('mouseenter', resetGuiFade);
+
+// Initial timeout
+resetGuiFade();
+
+// Add with other button listeners
+document.getElementById("modeBtn").addEventListener("click", () => {
+  if (streamMode === 'all') {
+    streamMode = 'recent';
+    document.getElementById("modeBtn").textContent = 'Most Recent Valid Data';
+  } else {
+    streamMode = 'all';
+    document.getElementById("modeBtn").textContent = 'Stream All';
+  }
+});
 </script>
 </body>
 </html>
