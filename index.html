@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NASA 3D Sonification Visualization – Points Only</title>
+  <style>
+    /* Basic reset and styling (same as your provided CSS) */
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: black;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    #gui {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      width: 340px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 10px;
+      box-sizing: border-box;
+      z-index: 10;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+    #controlsContainer h2 { 
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+    .control-group { 
+      margin-bottom: 8px;
+    }
+    .control-group label { 
+      display: block; 
+      margin-bottom: 2px;
+      font-size: 0.9em;
+    }
+    .slider-container {
+      position: relative;
+      height: 16px;
+      background: #333;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .slider-fill {
+      position: absolute;
+      height: 100%;
+      background: #0cf;
+      border-radius: 10px;
+      width: 50%; /* Initial fill */
+    }
+    .slider-value {
+      margin-top: 2px;
+      text-align: right;
+      font-size: 0.8em;
+    }
+    button {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 8px;
+      background: #0cf;
+      border: none;
+      border-radius: 5px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #09a; }
+    #plotCanvas {
+      position: fixed !important;
+      top: 20px !important;
+      right: 20px !important;
+      left: auto !important;
+      width: 300px;
+      height: 300px;
+      background: rgba(0,0,0,0.9);
+      border: 2px solid #0cf;
+      border-radius: 5px;
+      z-index: 10;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+    #debug {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      background: rgba(0,0,0,0.7);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 5px;
+      max-width: 300px;
+      max-height: 200px;
+      overflow: auto;
+      z-index: 20;
+    }
+    #version-info {
+        position: fixed;
+        left: 10px;
+        bottom: 10px;
+        color: rgba(255, 255, 255, 0.5);
+        font-family: monospace;
+        font-size: 11px;
+        z-index: 10;
+    }
+  </style>
+  <script src="p5.min.js"></script>
+</head>
+<body>
+  <div id="gui">
+    <div id="controlsContainer">
+      <h2>Controls</h2>
+      <button id="playBtn">Play</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="resetBtn">Reset</button>
+
+      <div class="control-group">
+        <label>Data Rate</label>
+        <div class="slider-container" data-min="0.1" data-max="10" data-step="0.1" data-value="5.00" id="dataRateSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="dataRateSliderValue">5.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Data Smoothing (0=Instant, 1=Very Smooth)</label>
+        <div class="slider-container" data-min="0" data-max="1" data-step="0.01" data-value="0.90" id="smoothingSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="smoothingSliderValue">0.90</div>
+      </div>
+
+      <div class="control-group">
+        <label>Relative Speed</label>
+        <div class="slider-container" data-min="0.1" data-max="3" data-step="0.1" data-value="1.00" id="relSpeedSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="relSpeedSliderValue">1.00</div>
+      </div>
+      
+      <div class="control-group">
+        <label>Speed Sensitivity (%)</label>
+        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="50" id="speedSensitivitySlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="speedSensitivitySliderValue">50.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Velocity Sensitivity (%)</label>
+        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="100" id="velocitySensitivitySlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="velocitySensitivitySliderValue">100.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Particle Size</label>
+        <div class="slider-container" data-min="1" data-max="20" data-step="1" data-value="15" id="sizeSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="sizeSliderValue">10.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Particle Count (100–1000)</label>
+        <div class="slider-container" data-min="100" data-max="1000" data-step="1" data-value="500" id="densitySlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="densitySliderValue">500.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Particle Generation Rate (per sec)</label>
+        <div class="slider-container" data-min="0" data-max="500" data-step="1" data-value="60" id="genRateSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="genRateSliderValue">60.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Travel Distance</label>
+        <div class="slider-container" data-min="1000" data-max="5000" data-step="100" data-value="3000" id="travelSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="travelSliderValue">3000.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Spawn Area Size (multiplier)</label>
+        <div class="slider-container" data-min="1" data-max="5" data-step="0.1" data-value="3" id="spawnSizeSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="spawnSizeSliderValue">2.00</div>
+      </div>
+
+      <div class="control-group">
+        <label>Motion Trail Length</label>
+        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="15" id="trailLengthSlider">
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-value" id="trailLengthSliderValue">10.00</div>
+      </div>
+    </div>
+
+    <canvas id="plotCanvas"></canvas>
+    <div id="debug"></div>
+    <div id="version-info">NOAA ACE Particle Visualization Demo v1.0</div>
+  </div>
+
+
+<script>
+// ---------- Custom Slider Functions (Reusable) ----------
+function initSlider(id) {
+  const slider = document.getElementById(id);
+  const fill = slider.querySelector('.slider-fill');
+  const valueDisplay = document.getElementById(id + "Value");
+  const min = parseFloat(slider.dataset.min);
+  const max = parseFloat(slider.dataset.max);
+  const step = parseFloat(slider.dataset.step);
+  let value = parseFloat(slider.dataset.value);
+
+  function updateSlider(newVal) {
+    value = Math.min(max, Math.max(min, newVal)); // Clamp value
+    slider.dataset.value = value.toFixed(2);
+    const percentage = ((value - min) / (max - min)) * 100;
+    fill.style.width = percentage + '%';
+    valueDisplay.textContent = value.toFixed(2);
+  }
+  updateSlider(value);
+
+  slider.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    const rect = slider.getBoundingClientRect();
+
+    function onMove(e) {
+      let pos = e.clientX - rect.left;
+      let perc = Math.max(0, Math.min(1, pos / rect.width));
+      let newVal = min + perc * (max - min);
+      newVal = Math.round(newVal / step) * step; // Snap to step
+      updateSlider(newVal);
+    }
+
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+function getSliderValue(id) {
+  return parseFloat(document.getElementById(id).dataset.value);
+}
+
+
+// ---------- Global Variables ----------
+let particles = [];
+let playing = true;
+let currentRecordIndex = 0;
+
+// UI Control Variables (with defaults)
+let dataRate;
+let relSpeed;
+let speedSensitivity;
+let velocitySensitivity;
+let smoothingFactor;
+let particleSize;
+let densityFactor;
+let travelDistance;
+let particleGenRate = 0;
+let lastParticleTime = 0;
+
+// Data and Smoothed Parameters
+let simDir;
+let simSpeed = 1;
+let simDensity = 100;
+let simTemperature = 0;
+let simDateStr = "N/A";
+let currentDir;
+let currentSpeed = 1;
+let currentTemperature = 30000;
+
+// Data Arrays
+let magDataRaw = [];
+let swepamDataRaw = [];
+let magRecords = [];
+let swepamRecords = [];
+let totalRecords = 0;
+
+// Plotting
+let bxHistory = [], byHistory = [], bzHistory = [];
+let speedHistory = [];
+let densityHistory = [];
+let temperatureHistory = [];
+const maxHistory = 200;
+const plotColors = {
+  "Bx": "#0cf", "By": "#fc0", "Bz": "#f0c",
+  "Velocity": "#0f0", "Density": "#ff0", "Temp": "#f0f"
+};
+
+// Add these global variables
+let minTemp, maxTemp;
+let spawnAreaSize;
+let particlesCreatedTimes = []; // Array to track ALL particle creations (new OR respawn)
+const RATE_WINDOW = 1000; // 1 second window for rate limiting
+
+// ---------- Utility Functions ----------
+function clog(...args) {
+  console.log("debug:", ...args);
+}
+
+function computeRange(arr) {
+    let valid = arr.filter(v => v !== -999.9 && v !== -1e+05);
+    if (valid.length === 0) valid = arr; // Fallback if all invalid
+    return { min: Math.min(...valid), max: Math.max(...valid) };
+}
+
+// ---------- Data Parsing ----------
+function parseMagData(lines) {
+  clog("Parsing magnetometer data...");
+  let records = [];
+  for (let line of lines) {
+    if (line.startsWith("#") || line.trim() === "") continue;
+    let tokens = line.trim().split(/\s+/);
+    if (tokens.length < 13) continue;
+    let rec = {
+      year: parseInt(tokens[0]), month: parseInt(tokens[1]), day: parseInt(tokens[2]),
+      time: tokens[3], julian: parseFloat(tokens[4]), seconds: parseFloat(tokens[5]),
+      status: parseInt(tokens[6]), Bx: parseFloat(tokens[7]), By: parseFloat(tokens[8]),
+      Bz: parseFloat(tokens[9]), Bt: parseFloat(tokens[10]), Lat: parseFloat(tokens[11]),
+      Long: parseFloat(tokens[12])
+    };
+    records.push(rec);
+  }
+  clog("Parsed magnetometer records:", records.length);
+  return records;
+}
+
+function parseSWEData(lines) {
+  clog("Parsing swepam data...");
+  let records = [];
+  let validTemps = [];
+  
+  for (let line of lines) {
+    if (line.startsWith("#") || line.trim() === "") continue;
+    let tokens = line.trim().split(/\s+/);
+    if (tokens.length < 10) continue;
+    let rec = {
+      year: parseInt(tokens[0]), month: parseInt(tokens[1]), day: parseInt(tokens[2]),
+      time: tokens[3], julian: parseFloat(tokens[4]), seconds: parseFloat(tokens[5]),
+      status: parseInt(tokens[6]), protonDensity: parseFloat(tokens[7]),
+      bulkSpeed: parseFloat(tokens[8]), ionTemp: parseFloat(tokens[9])
+    };
+    
+    // Collect valid temperature readings
+    if (rec.ionTemp !== -1.00e+05) {
+      validTemps.push(rec.ionTemp);
+    }
+    
+    records.push(rec);
+  }
+  
+  // Calculate temperature range from valid readings
+  minTemp = Math.min(...validTemps);
+  maxTemp = Math.max(...validTemps);
+  clog("Temperature range:", minTemp, "to", maxTemp);
+  
+  clog("Parsed swepam records:", records.length);
+  return records;
+}
+
+// ---------- Particle Class ----------
+class Particle {
+  constructor(travelDist) {
+    let spawnAreaSize = getSliderValue("spawnSizeSlider");
+    this.pos = createVector(
+      random(-width * spawnAreaSize / 2, width * spawnAreaSize / 2),
+      random(-height * spawnAreaSize / 2, height * spawnAreaSize / 2),
+      -travelDist
+    );
+    this.alpha = 0;
+    this.baseVel = createVector(0,0,0);
+    this.dataVel = createVector(0,0,0);
+    this.birthTime = millis();
+    this.birthTemp = simTemperature;
+    this.birthDir = currentDir.copy();
+    this.birthSpeed = currentSpeed;
+    
+    // Add trail array to store previous positions
+    this.trail = [];
+    this.lastRespawnTime = millis(); // Add this to track respawn timing
+  }
+
+  update(dir, speed, relSpeed, speedSens, velSens) {
+      // Store current position in trail before updating
+      this.trail.push(this.pos.copy());
+      
+      // Limit trail length based on slider value
+      let maxTrail = getSliderValue("trailLengthSlider");
+      while (this.trail.length > maxTrail) {
+          this.trail.shift();
+      }
+
+      // Existing update code
+      this.baseVel = createVector(0, 0, relSpeed * 10);
+      this.dataVel = this.birthDir.copy().mult(this.birthSpeed * speedSens * 0.05);
+      this.vel = p5.Vector.lerp(this.baseVel, this.dataVel.add(this.baseVel), velSens);
+      this.pos.add(this.vel);
+      this.alpha += 2;
+      this.alpha = constrain(this.alpha, 0, 255);
+
+      if (this.pos.z > 0) {
+          let currentTime = millis();
+          
+          // Clean up old creation times
+          particlesCreatedTimes = particlesCreatedTimes.filter(time => 
+              currentTime - time < RATE_WINDOW
+          );
+
+          // Only reset if we're under the rate limit
+          if (particleGenRate > 0 && particlesCreatedTimes.length < particleGenRate) {
+              this.reset();
+              particlesCreatedTimes.push(currentTime); // Track this respawn
+          } else {
+              return true; // Remove particle if we can't respawn
+          }
+      }
+      return false;
+  }
+
+  reset() {
+      let spawnAreaSize = getSliderValue("spawnSizeSlider");
+      this.pos = createVector(
+          random(-width * spawnAreaSize / 2, width * spawnAreaSize / 2),
+          random(-height * spawnAreaSize / 2, height * spawnAreaSize / 2),
+          -travelDistance
+      );
+      this.alpha = 0;
+      this.birthTime = millis();
+      this.birthTemp = simTemperature;
+      this.birthDir = currentDir.copy();
+      this.birthSpeed = currentSpeed;
+      
+      // Clear the trail on reset
+      this.trail = [];
+  }
+
+  show(size) {
+      // Draw the trail first
+      let trailLength = this.trail.length;
+      if (trailLength > 0) {
+          for (let i = 0; i < trailLength; i++) {
+              let pos = this.trail[i];
+              let trailAlpha = map(i, 0, trailLength, 0, this.alpha);
+              push();
+              translate(pos.x, pos.y, pos.z);
+              let col = this.mapTemperatureToColor(this.birthTemp);
+              noStroke();
+              fill(red(col), green(col), blue(col), trailAlpha * 0.5); // Half opacity for trail
+              sphere(size * 0.5); // Smaller size for trail points
+              pop();
+          }
+      }
+
+      // Draw the current particle
+      push();
+      translate(this.pos.x, this.pos.y, this.pos.z);
+      let col = this.mapTemperatureToColor(this.birthTemp);
+      noStroke();
+      fill(red(col), green(col), blue(col), this.alpha);
+      sphere(size);
+      pop();
+  }
+    mapTemperatureToColor(temp) {
+        let midTemp = minTemp + (maxTemp - minTemp) / 2;
+        let col;
+        
+        if (temp < midTemp) {
+            col = lerpColor(
+                color(255, 0, 0),    // Red for coldest
+                color(0, 0, 255),    // Blue for middle
+                map(temp, minTemp, midTemp, 0, 1)
+            );
+        } else {
+            col = lerpColor(
+                color(0, 0, 255),    // Blue for middle
+                color(255, 255, 255), // White for hottest
+                map(temp, midTemp, maxTemp, 0, 1)
+            );
+        }
+        return col;
+    }
+}
+
+// ---------- Plotting Functions ----------
+function updateHistory(arr, value) {
+  arr.push(value);
+  if (arr.length > maxHistory) arr.shift();
+}
+
+function updatePlots() {
+  let canvas = document.getElementById("plotCanvas");
+  let ctx = canvas.getContext("2d");
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let numPlots = 6;
+  let gap = 5;
+  let plotHeight = (canvas.height - (numPlots - 1) * gap) / numPlots;
+
+  drawPlot(ctx, bxHistory, 0, 0 * (plotHeight + gap), canvas.width, plotHeight, "Bx");
+  drawPlot(ctx, byHistory, 0, 1 * (plotHeight + gap), canvas.width, plotHeight, "By");
+  drawPlot(ctx, bzHistory, 0, 2 * (plotHeight + gap), canvas.width, plotHeight, "Bz");
+  drawPlot(ctx, speedHistory, 0, 3 * (plotHeight + gap), canvas.width, plotHeight, "Velocity");
+  drawPlot(ctx, densityHistory, 0, 4 * (plotHeight + gap), canvas.width, plotHeight, "Density");
+  drawPlot(ctx, temperatureHistory, 0, 5 * (plotHeight + gap), canvas.width, plotHeight, "Temp");
+}
+
+function drawPlot(ctx, dataArray, x, y, w, h, label) {
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.fillRect(x, y, w, h);
+  if (dataArray.length < 2) return;
+
+  let range = computeRange(dataArray);
+  let minVal = range.min;
+  let maxVal = range.max;
+  if (maxVal === minVal) { maxVal += 1; minVal -= 1; }
+
+  ctx.strokeStyle = plotColors[label] || "white";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < dataArray.length; i++) {
+    let dx = x + (i / (maxHistory - 1)) * w;
+    let dy = y + h - ((dataArray[i] - minVal) / (maxVal - minVal)) * h;
+    if (i === 0) ctx.moveTo(dx, dy);
+    else ctx.lineTo(dx, dy);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = plotColors[label] || "white";
+  ctx.font = "12px sans-serif";
+  ctx.fillText(`${label}: ${dataArray[dataArray.length-1].toFixed(2)}`, x + 5, y + 15);
+}
+
+// ---------- Particle Management ----------
+function adjustParticleCount(densityFactor) {
+    let desiredCount = floor(densityFactor);
+    if (desiredCount < particles.length) {
+        particles.splice(desiredCount); // Remove excess particles
+    }
+}
+
+function updateParticles() {
+    let currentTime = millis();
+    
+    // Clean up old creation times
+    particlesCreatedTimes = particlesCreatedTimes.filter(time => 
+        currentTime - time < RATE_WINDOW
+    );
+
+    // Only generate if under BOTH limits
+    if (particleGenRate > 0 && 
+        particles.length < densityFactor && 
+        particlesCreatedTimes.length < particleGenRate) {
+        
+        particles.push(new Particle(travelDistance));
+        particlesCreatedTimes.push(currentTime);
+    }
+
+    // Update existing particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        if (particles[i].update(currentDir, currentSpeed, relSpeed, speedSensitivity, velocitySensitivity)) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+// ---------- p5.js Functions ----------
+function preload() {
+  clog("Preloading data files...");
+  magDataRaw = loadStrings("ace-magnetometer.txt", () => { clog("Loaded ace-magnetometer.txt"); });
+  swepamDataRaw = loadStrings("ace-swepam.txt", () => { clog("Loaded ace-swepam.txt"); });
+}
+
+function setup() {
+  setAttributes('alpha', true); // Enable alpha blending
+  createCanvas(windowWidth, windowHeight, WEBGL);
+  frameRate(60);
+
+  // Initialize UI values (important to do this *before* creating particles)
+  dataRate = getSliderValue("dataRateSlider");
+  relSpeed = getSliderValue("relSpeedSlider");
+  speedSensitivity = getSliderValue("speedSensitivitySlider") / 100; // Convert percentage to 0-1 range
+  velocitySensitivity = getSliderValue("velocitySensitivitySlider")/100;
+  smoothingFactor = getSliderValue("smoothingSlider");
+  particleSize = getSliderValue("sizeSlider");
+  densityFactor = getSliderValue("densitySlider");
+  travelDistance = getSliderValue("travelSlider");
+  particleGenRate = getSliderValue("genRateSlider");
+
+
+  // Parse data
+  if (magDataRaw && magDataRaw.length > 0) {
+    magRecords = parseMagData(magDataRaw);
+    for (let i = 0; i < magRecords.length; i++) {
+      if (magRecords[i].Bx !== -999.9) {
+        currentRecordIndex = i;
+        break;
+      }
+    }
+  } else { clog("ERROR: No magnetometer data."); }
+  if (swepamDataRaw && swepamDataRaw.length > 0) {
+    swepamRecords = parseSWEData(swepamDataRaw);
+  } else { clog("ERROR: No swepam data."); }
+  totalRecords = min(magRecords.length, swepamRecords.length);
+  clog("Total records:", totalRecords);
+
+  currentDir = createVector(1, 0, 0);
+  currentSpeed = 1;
+  currentTemperature = 30000;
+
+  // Instead of creating all particles at once, start with an empty array
+  particles = [];
+
+    // Initialize sliders.  Must happen after createCanvas.
+    initSlider("dataRateSlider");
+    initSlider("relSpeedSlider");
+    initSlider("speedSensitivitySlider");
+    initSlider("velocitySensitivitySlider");
+    initSlider("smoothingSlider");
+    initSlider("sizeSlider");
+    initSlider("densitySlider");
+    initSlider("travelSlider");
+    initSlider("genRateSlider");
+    initSlider("spawnSizeSlider");
+    initSlider("trailLengthSlider");
+}
+
+
+function draw() {
+  // Update control variables
+  dataRate = getSliderValue("dataRateSlider");
+  relSpeed = getSliderValue("relSpeedSlider");
+  speedSensitivity = getSliderValue("speedSensitivitySlider") / 100; // 0-1 range
+  velocitySensitivity = getSliderValue("velocitySensitivitySlider")/100;
+  smoothingFactor = getSliderValue("smoothingSlider");
+  particleSize = getSliderValue("sizeSlider");
+  densityFactor = getSliderValue("densitySlider");
+  travelDistance = getSliderValue("travelSlider");
+  particleGenRate = getSliderValue("genRateSlider");
+
+  // Get data for the current frame
+  if (magRecords.length > 0) {
+    let idx = floor(currentRecordIndex);
+    let magRec = magRecords[idx];
+    if (magRec) {
+      let bx = (magRec.Bx !== -999.9) ? magRec.Bx : currentDir.x;
+      let by = (magRec.By !== -999.9) ? magRec.By : currentDir.y;
+      let bz = (magRec.Bz !== -999.9) ? magRec.Bz : currentDir.z;
+      simDir = createVector(bx, by, bz).normalize();
+      simDateStr = nf(magRec.year, 4) + "-" + nf(magRec.month, 2) + "-" + nf(magRec.day, 2) + " " + magRec.time;
+      updateHistory(bxHistory, bx);
+      updateHistory(byHistory, by);
+      updateHistory(bzHistory, bz);
+    }
+  }
+  if (swepamRecords.length > 0) {
+    let idx = floor(currentRecordIndex);
+    let sweRec = swepamRecords[idx];
+    if (sweRec) {
+        simSpeed = (sweRec.bulkSpeed !== -9999.9) ? sweRec.bulkSpeed : currentSpeed;
+        simDensity = (sweRec.protonDensity !== -9999.9) ? sweRec.protonDensity : simDensity;
+        simTemperature = (sweRec.ionTemp !== -1.00e+05) ? sweRec.ionTemp : currentTemperature;
+        
+        updateHistory(speedHistory, simSpeed);
+        updateHistory(densityHistory,simDensity);
+        updateHistory(temperatureHistory, simTemperature);
+    }
+  }
+
+  // Smoothing
+  let updateFactor = lerp(1, 0.05, smoothingFactor);
+  currentDir = p5.Vector.lerp(currentDir, simDir, updateFactor);
+  currentSpeed = lerp(currentSpeed, simSpeed, updateFactor);
+  currentTemperature = lerp(currentTemperature, simTemperature, smoothingFactor);
+
+  // Adjust particle count
+  adjustParticleCount(densityFactor);
+
+  // Generate new particles based on rate
+  updateParticles();
+
+  // p5.js drawing
+  background(0);
+  camera(0, 0, 0, 0, 0, -1000, 0, 1, 0); // Look down -Z axis
+
+  // Advance record index (if playing)
+  if (playing && totalRecords > 0) {
+    currentRecordIndex += dataRate / 60.0; // Assuming ~60fps
+    if (currentRecordIndex >= totalRecords) currentRecordIndex = 0;
+  }
+
+  // Update and draw particles with rate-limited respawning
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    
+    // Check if particle needs to reset
+    if (p.pos.z >= travelDistance) {  // Particle hit the far camera plane
+        particles.splice(i, 1);
+        clog(`Removed particle at camera plane (Count: ${particles.length})`);
+    } else {
+      p.show(particleSize);
+    }
+  }
+    updatePlots(); // Update the plots.
+
+  // Replace the existing debug logging with more detailed particle system status
+  if (frameCount % 100 === 0) {
+    clog("=== Particle System Status ===");
+    clog(`Generation Rate: ${particleGenRate} particles/sec`);
+    clog(`Current Particle Count: ${particles.length}`);
+    clog(`Target Count: ${densityFactor}`);
+    clog(`Last Generation: ${millis() - lastParticleTime}ms ago`);
+    clog(`Current Frame: ${frameCount}`);
+    clog(`Record: ${floor(currentRecordIndex)} Date: ${simDateStr}`);
+    clog("===========================");
+  }
+
+    let dbgText = "Frame: " + frameCount + "<br>" +
+        "Record: " + floor(currentRecordIndex) + " / " + totalRecords + "<br>" +
+        "Date/Time: " + simDateStr + "<br>" +
+        "Bx, By, Bz: " + ((magRecords.length > 0 && magRecords[floor(currentRecordIndex)]) ?
+            magRecords[floor(currentRecordIndex)].Bx.toFixed(2) + ", " +
+            magRecords[floor(currentRecordIndex)].By.toFixed(2) + ", " +
+            magRecords[floor(currentRecordIndex)].Bz.toFixed(2) : "N/A") + "<br>" +
+        "Bulk Speed: " + simSpeed.toFixed(2) + "<br>" +
+        "Density: " + simDensity.toFixed(2) + "<br>" +
+        "Ion Temp: " + simTemperature.toFixed(2) + "<br>" +
+        "Data Rate: " + dataRate.toFixed(2) + " rec/sec, Rel Speed: " + relSpeed.toFixed(2) + "<br>" +
+        "Speed Sens: " + (speedSensitivity * 100).toFixed(0) + "%, Vel Sens: " + (velocitySensitivity*100).toFixed(0) + "%<br>"+
+        "Smoothing: " + smoothingFactor.toFixed(2) + ", Particle Size: " + particleSize.toFixed(2) + "<br>" +
+        "Density Factor: " + densityFactor.toFixed(2) + ", Travel Dist: " + travelDistance.toFixed(0) + "<br>";
+
+    document.getElementById("debug").innerHTML = dbgText;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight, WEBGL);
+  clog("Window resized:", windowWidth, windowHeight);
+}
+
+// ---------- UI Button Listeners ----------
+document.getElementById("playBtn").addEventListener("click", () => {
+  playing = true;
+  loop();
+});
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  playing = false;
+  noLoop();
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  particles = []; // Clear particles
+  currentRecordIndex = 0; // Reset to start
+  adjustParticleCount(getSliderValue("densitySlider")); // Recreate based on current density
+  // Reset other parameters to their initial states if needed
+  currentDir = createVector(1,0,0);
+  currentSpeed = 1;
+  currentTemperature = 30000;
+});
+
+</script>
+</body>
+</html>
