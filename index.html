@@ -592,20 +592,25 @@ function updateParticles() {
 // ---------- p5.js Functions ----------
 function preload() {
   clog("Preloading data files...");
-  // Instead of loadStrings from local files, fetch from NOAA
-  fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt')
-    .then(response => response.text())
-    .then(text => {
-      magDataRaw = text.split('\n');
-      clog("Loaded ace-magnetometer.txt");
-    });
-    
-  fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
-    .then(response => response.text())
-    .then(text => {
-      swepamDataRaw = text.split('\n');
-      clog("Loaded ace-swepam.txt");
-    });
+  
+  // Function to fetch data with retry logic
+  function fetchDataWithRetry(url, parseFunction, dataRawVar, recordsVar) {
+    fetch(url)
+      .then(response => response.text())
+      .then(text => {
+        window[dataRawVar] = text.split('\n');
+        window[recordsVar] = parseFunction(window[dataRawVar]);
+        clog(`Loaded ${url}`);
+      })
+      .catch(() => {
+        // Retry every 5 seconds if the initial fetch fails
+        setTimeout(() => fetchDataWithRetry(url, parseFunction, dataRawVar, recordsVar), 5000);
+      });
+  }
+
+  // Initial data fetch with retry logic
+  fetchDataWithRetry('https://services.swpc.noaa.gov/text/ace-magnetometer.txt', parseMagData, 'magDataRaw', 'magRecords');
+  fetchDataWithRetry('https://services.swpc.noaa.gov/text/ace-swepam.txt', parseSWEData, 'swepamDataRaw', 'swepamRecords');
 
   // Set up periodic refresh every minute
   setInterval(() => {
