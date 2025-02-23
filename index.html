@@ -290,10 +290,10 @@
 
         <div class="control-group">
           <label>Spawn Area Size</label>
-          <div class="slider-container" data-min="1" data-max="5" data-step="0.1" data-value="3.0" id="spawnSizeSlider">
+          <div class="slider-container" data-min="1" data-max="5" data-step="0.1" data-value="2.7" id="spawnSizeSlider">
             <div class="slider-fill"></div>
           </div>
-          <div class="slider-value" id="spawnSizeSliderValue">3.0</div>
+          <div class="slider-value" id="spawnSizeSliderValue">2.7</div>
         </div>
 
         <div class="control-group">
@@ -314,10 +314,10 @@
 
         <div class="control-group">
           <label>Fade In Time</label>
-          <div class="slider-container" data-min="0.1" data-max="5" data-step="0.1" data-value="1.7" id="fadeInTimeSlider">
+          <div class="slider-container" data-min="0" data-max="3" data-step="0.1" data-value="1.2" id="fadeInTimeSlider">
             <div class="slider-fill"></div>
           </div>
-          <div class="slider-value" id="fadeInTimeSliderValue">1.7s</div>
+          <div class="slider-value" id="fadeInTimeSliderValue">1.2s</div>
         </div>
 
         <div class="control-group">
@@ -1761,7 +1761,7 @@ document.querySelector('#forecastModal > div').addEventListener('click', () => {
 });
 
 // Update the outside click handler
-document.getElementById('forecastModal').addEventListener('click', (e) => {
+document.getElementById('forecastModal').addEventListener('click', (e) => { 
   if (e.target === document.getElementById('forecastModal')) {
     const modal = document.getElementById('forecastModal');
     modal.style.opacity = '0';
