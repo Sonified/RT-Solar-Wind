@@ -176,9 +176,9 @@
     .control-section {
       background: rgba(0, 30, 60, 0.3);
       border-radius: 12px;
-      padding: 6px;
-      margin-bottom: 10px;
-      width: 100%;
+      padding: 2px; /* Reduced from 6px */
+      margin-bottom: 3px; /* Reduced from 10px */
+      width: calc(100% - 15px); /* Reduced width by 15px */
       box-sizing: border-box;
     }
 
@@ -186,34 +186,35 @@
       background: rgba(30, 0, 60, 0.3); /* More transparent purple tint */
     }
 
+    /* Update the section header spacing */
     h3.section-header {
-      margin: 0 0 6px 0; /* Less space below headers */
-      padding: 3px 0; /* Less padding */
+      margin: 0 0 4px 0; /* Reduced bottom margin from 6px to 4px */
+      padding: 1px 0; /* Reduced from 3px */
       font-size: 1.0em;
       color: #0cf;
-      border-bottom: 1px solid rgba(0, 204, 255, 0.5); /* More transparent border */
+      border-bottom: 1px solid rgba(0, 204, 255, 0.5);
     }
 
-    /* Update the existing control-group spacing */
+    /* Make control groups more compact */
     .control-group {
-      margin-bottom: 2px !important; /* Even less space between controls */
+      margin-bottom: 0px !important; /* Reduced from 2px */
     }
 
     /* Update the spacing between sections */
     #controlsContainer > div.control-section {
-      margin-bottom: 8px; /* Less space between sections */
+      margin-bottom: 15px; /* Less space between sections */
     }
 
     /* Fix mode alignment */
     #streamMode {
-      width: 100%;
+      width: calc(100% - 15px); /* Reduced width by 15px */
       text-align: center;
       margin-bottom: 8px;
     }
 
     /* Make play/pause/reset buttons consistent width */
     .playback-controls {
-      width: 100%;
+      width: calc(100% - 15px); /* Reduced width by 15px */
       display: flex;
       gap: 4px;
     }
@@ -227,17 +228,17 @@
     /* Universal menu header style */
     .menu-header {
       margin: 0 0 6px 0;
-      padding: 4px 0;
+      padding: 2px 0;
       font-size: 1em;
       color: #0cf;
-      border-bottom: 1px solid rgba(0, 204, 255, 0.5);
-      width: 100%;
+      border-bottom: 0px solid rgba(0, 204, 255, 0.5);
+      width: calc(100% - 15px); /* Reduced width by 15px */
       box-sizing: border-box;
     }
 
     /* Fix mode alignment */
     .control-group {
-      margin-bottom: 2px !important;
+      margin-bottom: 1px !important;
       padding-left: 6px;  /* Match the button padding */
     }
 
