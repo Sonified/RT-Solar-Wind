@@ -41,13 +41,17 @@
       opacity: 1;
       pointer-events: auto;
     }
+    #controlsContainer {
+      width: 100%;
+      box-sizing: border-box;
+    }
     #controlsContainer h2 { 
       margin-top: 0;
       margin-bottom: 10px;
-      font-size: 1.2em;
+      font-size: 1.0em;
       color: #0cf;
-      padding-bottom: 4px;
-      border-bottom: 1px solid rgba(0, 204, 255, 0.5);  /*/ Match the section header border
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(0, 204, 255, 0.5);
     }
     .control-group {
       margin-bottom: 2px !important;  /* Reduce from 4px to 3px */
@@ -89,7 +93,8 @@
       transition: background 0.2s;
     }
     button:hover { 
-      background: #09a !important; 
+      opacity: 0.8 !important;
+      transition: opacity 0.2s;
     }
     button:active {
       background: #fff !important;
@@ -167,11 +172,14 @@
       background: #fff !important;
     }
 
+    /* Add consistent width for control sections */
     .control-section {
-      background: rgba(0, 30, 60, 0.3); /* More transparent blue tint */
-      border-radius: 12px; /* More rounded corners */
-      padding: 6px; /* Slightly less padding */
-      margin-bottom: 10px; /* Slightly less margin */
+      background: rgba(0, 30, 60, 0.3);
+      border-radius: 12px;
+      padding: 6px;
+      margin-bottom: 10px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .control-section.particles {
@@ -195,21 +203,65 @@
     #controlsContainer > div.control-section {
       margin-bottom: 8px; /* Less space between sections */
     }
+
+    /* Fix mode alignment */
+    #streamMode {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    /* Make play/pause/reset buttons consistent width */
+    .playback-controls {
+      width: 100%;
+      display: flex;
+      gap: 4px;
+    }
+
+    .playback-controls button {
+      flex: 1;
+      padding: 6px;
+      margin-bottom: 8px;
+    }
+
+    /* Universal menu header style */
+    .menu-header {
+      margin: 0 0 6px 0;
+      padding: 4px 0;
+      font-size: 1em;
+      color: #0cf;
+      border-bottom: 1px solid rgba(0, 204, 255, 0.5);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Fix mode alignment */
+    .control-group {
+      margin-bottom: 2px !important;
+      padding-left: 6px;  /* Match the button padding */
+    }
+
+    /* Update mode button style */
+    #modeBtn {
+      width: auto;
+      padding: 2px 8px;
+      margin-left: 4px;  /* Add a little space after "Mode:" label */
+    }
   </style>
   <script src="p5.min.js"></script>
 </head>
 <body>
   <div id="gui">
     <div id="controlsContainer">
-      <h2>Controls</h2>
-      <button id="playPauseBtn">Pause</button>
-      <button id="resetBtn">Reset</button>
-
-      <div class="control-group">
-        <label>Mode: <button id="modeBtn" style="width: auto; padding: 2px 8px; margin: 0 0 0 8px;">Stream All</button></label>
+      <!-- First section -->
+      <div class="control-section">
+        <h3 class="section-header">Playback Controls</h3>
+        <button id="playPauseBtn" style="width: calc(100% - 12px); margin-left: 6px; margin-right: 6px; box-sizing: border-box;">Pause</button>
+        <button id="resetBtn" style="width: calc(100% - 12px); margin-left: 6px; margin-right: 6px; box-sizing: border-box;">Reset</button>
+        <div class="control-group">
+          <label>Mode: <button id="modeBtn" style="width: auto; padding: 2px 8px; margin: 0;">Stream All</button></label>
+        </div>
       </div>
-
-      <div style="height: 12px;"></div>  <!-- Increased spacing -->
 
       <div class="control-section">
         <h3 class="section-header">Data Stream</h3>
@@ -281,6 +333,14 @@
         </div>
 
         <div class="control-group">
+          <label>Fade In Time</label>
+          <div class="slider-container" data-min="0" data-max="3" data-step="0.1" data-value="1.2" id="fadeInTimeSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="fadeInTimeSliderValue">1.2s</div>
+        </div>
+
+        <div class="control-group">
           <label>Travel Distance</label>
           <div class="slider-container" data-min="1000" data-max="8000" data-step="100" data-value="3500" id="travelSlider">
             <div class="slider-fill"></div>
@@ -298,10 +358,10 @@
 
         <div class="control-group">
           <label>Motion Trail Length</label>
-          <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="23" id="trailLengthSlider">
+          <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="20" id="trailLengthSlider">
             <div class="slider-fill"></div>
           </div>
-          <div class="slider-value" id="trailLengthSliderValue">23</div>
+          <div class="slider-value" id="trailLengthSliderValue">20</div>
         </div>
 
         <div class="control-group">
@@ -313,27 +373,19 @@
         </div>
 
         <div class="control-group">
-          <label>Fade In Time</label>
-          <div class="slider-container" data-min="0" data-max="3" data-step="0.1" data-value="1.2" id="fadeInTimeSlider">
-            <div class="slider-fill"></div>
-          </div>
-          <div class="slider-value" id="fadeInTimeSliderValue">1.2s</div>
-        </div>
-
-        <div class="control-group">
           <label>Motion Trail Size Tapering</label>
-          <div class="slider-container" data-min="0" data-max="10" data-step="0.5" data-value="2" id="trailTaperSlider">
+          <div class="slider-container" data-min="0" data-max="10" data-step="0.5" data-value="3" id="trailTaperSlider">
             <div class="slider-fill"></div>
           </div>
-          <div class="slider-value" id="trailTaperSliderValue">2%</div>
+          <div class="slider-value" id="trailTaperSliderValue">3%</div>
         </div>
 
         <div class="control-group">
           <label>Motion Trail Opacity Tapering</label>
-          <div class="slider-container" data-min="0" data-max="100" data-step="5" data-value="85" id="trailOpacityTaperSlider">
+          <div class="slider-container" data-min="0" data-max="100" data-step="5" data-value="65" id="trailOpacityTaperSlider">
             <div class="slider-fill"></div>
           </div>
-          <div class="slider-value" id="trailOpacityTaperSliderValue">85%</div>
+          <div class="slider-value" id="trailOpacityTaperSliderValue">65%</div>
         </div>
 
         <div class="control-group" style="display: none;">
@@ -410,11 +462,14 @@
 
   <!-- Update both button styles -->
   <div style="position: fixed !important; top: 335px !important; right: 20px !important; width: 300px; display: flex; justify-content: center; gap: 10px; z-index: 10;">
-    <button id="listenBtn" style="width: 110px; background: rgba(0, 204, 255, 0.2); border: 1px solid #0cf; color: #0cf; padding: 4px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
+    <button id="listenBtn" style="width: 110px; height: 42px; background: rgba(0, 204, 255, 0.2); border: 1px solid #0cf; color: #0cf; padding: 4px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
       Listen to Space
     </button>
-    <button id="forecastBtn" style="width: 110px; background: rgba(0, 204, 255, 0.2); border: 1px solid #0cf; color: #0cf; padding: 4px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
-      See Forecast
+    <button id="forecastBtn" style="width: 110px; height: 42px; background: rgba(0, 204, 255, 0.2); border: 1px solid #0cf; color: #0cf; padding: 4px; border-radius: 5px; cursor: pointer; transition: background 0.2s; line-height: 1.2;">
+      See<br>Forecast
+    </button>
+    <button id="swpcBtn" style="width: 110px; height: 42px; background: rgba(0, 204, 255, 0.2); border: 1px solid #0cf; color: #0cf; padding: 4px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
+      SWPC
     </button>
   </div>
 
@@ -458,23 +513,37 @@ function initSlider(id) {
     
     // Format display value based on slider type
     let displayValue;
-    if (id.includes("Sensitivity") || id === "trailSizeSlider" || id === "trailTaperSlider" || id === "trailOpacityTaperSlider") {
+    
+    if (id.includes("Sensitivity") || 
+        id === "trailSizeSlider" || 
+        id === "trailTaperSlider" || 
+        id === "trailOpacityTaperSlider") {
       displayValue = Math.round(value) + "%";
-    } else if (id === "smoothingSlider") {
+    } 
+    else if (id === "smoothingSlider") {
       displayValue = Math.round(value * 100) + "%";
-    } else if (id === "relSpeedSlider") {
+    } 
+    else if (id === "relSpeedSlider") {
       displayValue = value.toFixed(1);
-    } else if (id === "dataRateSlider") {
+    } 
+    else if (id === "dataRateSlider") {
       displayValue = value.toFixed(2) + "/s";
-    } else if (id === "spawnSizeSlider" || id === "boundarySlider" || id === "cameraOpeningSlider") {  // Add cameraOpeningSlider here
+    } 
+    else if (id === "spawnSizeSlider" || 
+             id === "boundarySlider" || 
+             id === "cameraOpeningSlider") {  // Add cameraOpeningSlider here
       displayValue = value.toFixed(1) + "x";
-    } else if (id === "fadeInTimeSlider") {
+    } 
+    else if (id === "fadeInTimeSlider") {
       displayValue = value.toFixed(1) + "s";
-    } else if (id === "genRateSlider") {
+    } 
+    else if (id === "genRateSlider") {
       displayValue = Math.round(value) + "/s";
-    } else {
+    } 
+    else {
       displayValue = Math.round(value);
     }
+    
     valueDisplay.textContent = displayValue;
   }
   updateSlider(value);
@@ -1368,14 +1437,18 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     "sizeSlider": 17,
     "densitySlider": 220,
     "genRateSlider": 18,
-    "travelSlider": 4000,
-    "spawnSizeSlider": 3.0,
-    "trailLengthSlider": 23,
+    "travelSlider": 3500,
+    "spawnSizeSlider": 2.7,
+    "trailLengthSlider": 20,
     "trailSizeSlider": 70,
-    "fadeInTimeSlider": 1.7,
-    "trailTaperSlider": 2,
-    "trailOpacityTaperSlider": 85
+    "fadeInTimeSlider": 1.2,
+    "trailTaperSlider": 3,
+    "trailOpacityTaperSlider": 65
   };
+
+
+  
+  
 
   // Update each slider
   Object.entries(defaultValues).forEach(([sliderId, value]) => {
@@ -1728,11 +1801,11 @@ document.getElementById('forecastBtn').addEventListener('click', () => {
     setTimeout(() => {
       modal.style.display = 'none';
     }, 500);
-    forecastBtn.textContent = 'See Forecast';
+    forecastBtn.innerHTML = 'See<br>Forecast';
     return;
   }
 
-  forecastBtn.textContent = 'Hide Forecast';
+  forecastBtn.innerHTML = 'Hide<br>Forecast';
   
   // Show modal first with opacity 0
   modal.style.display = 'block';
@@ -1775,6 +1848,56 @@ document.getElementById('forecastModal').addEventListener('click', (e) => {
 // Add listen button handler
 document.getElementById('listenBtn').addEventListener('click', () => {
   window.open('https://www.youtube.com/watch?v=j9A2MTB9gl0', '_blank');
+});
+
+// Add SWPC button handler
+document.getElementById('swpcBtn').addEventListener('click', () => {
+  window.open('https://www.swpc.noaa.gov/', '_blank');
+});
+
+// Add reset button handler
+document.getElementById('resetBtn').addEventListener('click', () => {
+  const sliders = document.querySelectorAll('.slider-container');
+  
+  sliders.forEach(slider => {
+    const defaultValue = parseFloat(slider.dataset.value);
+    const sliderId = slider.id;
+    // Update slider fill
+    const fill = slider.querySelector('.slider-fill');
+    const min = parseFloat(slider.dataset.min);
+    const max = parseFloat(slider.dataset.max);
+    const fillPercentage = ((defaultValue - min) / (max - min)) * 100;
+    fill.style.width = fillPercentage + '%';
+    
+    // Update value display
+    const valueDisplay = document.getElementById(sliderId + "Value");
+    let displayText;
+    
+    // Special formatting for different slider types
+    if (sliderId === "dataRateSlider") {
+      displayText = defaultValue.toFixed(2) + "/s";  // Always show 2 decimal places
+    } else if (sliderId === "genRateSlider") {
+      displayText = Math.round(defaultValue) + "/s";
+    } else if (sliderId === "smoothingSlider") {
+      displayText = Math.round(defaultValue * 100) + "%";
+    } else if (sliderId === "speedSensitivitySlider" || 
+               sliderId === "velocitySensitivitySlider" ||
+               sliderId === "trailSizeSlider" ||
+               sliderId === "trailOpacityTaperSlider") {
+      displayText = Math.round(defaultValue) + "%";
+    } else if (sliderId === "fadeInTimeSlider") {
+      displayText = defaultValue.toFixed(1) + "s";
+    } else if (sliderId === "trailTaperSlider") {
+      displayText = defaultValue + "%";
+    } else {
+      displayText = defaultValue.toString();
+    }
+    
+    valueDisplay.textContent = displayText;
+    
+    // Update the actual value
+    setSliderValue(sliderId, defaultValue);
+  });
 });
 </script>
 </body>
