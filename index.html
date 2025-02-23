@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>ACE 3D Visualization Demo v1.1</title>
+  <title>ACE RT Visualization v1.2</title>
   <style>
     /* Basic reset and styling (same as your provided CSS) */
     body, html {
@@ -45,9 +45,12 @@
       margin-top: 0;
       margin-bottom: 10px;
       font-size: 1.2em;
+      color: #0cf;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(0, 204, 255, 0.5);  /*/ Match the section header border
     }
     .control-group {
-      margin-bottom: 4px !important;  /* Reduce from 6px to 4px */
+      margin-bottom: 2px !important;  /* Reduce from 4px to 3px */
     }
     .control-group label { 
       display: block; 
@@ -83,8 +86,14 @@
       color: #000;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.2s;
     }
-    button:hover { background: #09a; }
+    button:hover { 
+      background: #09a !important; 
+    }
+    button:active {
+      background: #fff !important;
+    }
     #plotCanvas {
       position: fixed !important;
       top: 25px !important;
@@ -150,6 +159,42 @@
       text-align: center;
       width: 300px;
     }
+    #retryNowBtn:hover, #useHistoricalBtn:hover {
+      background: #09a !important;
+    }
+
+    #retryNowBtn:active, #useHistoricalBtn:active {
+      background: #fff !important;
+    }
+
+    .control-section {
+      background: rgba(0, 30, 60, 0.3); /* More transparent blue tint */
+      border-radius: 12px; /* More rounded corners */
+      padding: 6px; /* Slightly less padding */
+      margin-bottom: 10px; /* Slightly less margin */
+    }
+
+    .control-section.particles {
+      background: rgba(30, 0, 60, 0.3); /* More transparent purple tint */
+    }
+
+    h3.section-header {
+      margin: 0 0 6px 0; /* Less space below headers */
+      padding: 3px 0; /* Less padding */
+      font-size: 1.0em;
+      color: #0cf;
+      border-bottom: 1px solid rgba(0, 204, 255, 0.5); /* More transparent border */
+    }
+
+    /* Update the existing control-group spacing */
+    .control-group {
+      margin-bottom: 2px !important; /* Even less space between controls */
+    }
+
+    /* Update the spacing between sections */
+    #controlsContainer > div.control-section {
+      margin-bottom: 8px; /* Less space between sections */
+    }
   </style>
   <script src="p5.min.js"></script>
 </head>
@@ -157,172 +202,242 @@
   <div id="gui">
     <div id="controlsContainer">
       <h2>Controls</h2>
-      <button id="playBtn">Play</button>
-      <button id="pauseBtn">Pause</button>
+      <button id="playPauseBtn">Pause</button>
       <button id="resetBtn">Reset</button>
 
       <div class="control-group">
         <label>Mode: <button id="modeBtn" style="width: auto; padding: 2px 8px; margin: 0 0 0 8px;">Stream All</button></label>
       </div>
 
-      <div style="height: 10px;"></div>  <!-- Add spacing -->
+      <div style="height: 12px;"></div>  <!-- Increased spacing -->
 
-      <div class="control-group">
-        <label>Data Rate</label>
-        <div class="slider-container" data-min="0.1" data-max="10" data-step="0.1" data-value="4.00" id="dataRateSlider">
-          <div class="slider-fill"></div>
+      <div class="control-section">
+        <h3 class="section-header">Data Stream</h3>
+        <div class="control-group">
+          <label>Stream Rate</label>
+          <div class="slider-container" data-min="0.1" data-max="10" data-step="0.1" data-value="4.00" id="dataRateSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="dataRateSliderValue">4.00/s</div>
         </div>
-        <div class="slider-value" id="dataRateSliderValue">4.00/s</div>
+
+        <div class="control-group">
+          <label>Stream Smoothing</label>
+          <div class="slider-container" data-min="0" data-max="1" data-step="0.01" data-value="0.90" id="smoothingSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="smoothingSliderValue">90%</div>
+        </div>
       </div>
 
-      <div class="control-group">
-        <label>Data Smoothing</label>
-        <div class="slider-container" data-min="0" data-max="1" data-step="0.01" data-value="0.90" id="smoothingSlider">
-          <div class="slider-fill"></div>
+      <div class="control-section particles">
+        <h3 class="section-header">Particles</h3>
+        <div class="control-group">
+          <label>Relative Speed</label>
+          <div class="slider-container" data-min="1" data-max="10" data-step="0.1" data-value="1.2" id="relSpeedSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="relSpeedSliderValue">1.2</div>
         </div>
-        <div class="slider-value" id="smoothingSliderValue">90%</div>
-      </div>
+        
+        <div class="control-group">
+          <label>Speed Sensitivity</label>
+          <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="50" id="speedSensitivitySlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="speedSensitivitySliderValue">50%</div>
+        </div>
 
-      <div class="control-group">
-        <label>Relative Speed</label>
-        <div class="slider-container" data-min="1" data-max="5" data-step="0.1" data-value="1.0" id="relSpeedSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Magnetic Field Vector Influence</label>
+          <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="80" id="velocitySensitivitySlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="velocitySensitivitySliderValue">80%</div>
         </div>
-        <div class="slider-value" id="relSpeedSliderValue">1.0</div>
-      </div>
-      
-      <div class="control-group">
-        <label>Speed Data Sensitivity</label>
-        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="50" id="speedSensitivitySlider">
-          <div class="slider-fill"></div>
-        </div>
-        <div class="slider-value" id="speedSensitivitySliderValue">50%</div>
-      </div>
 
-      <div class="control-group">
-        <label>Magnetic Field Data Directional Sensitivity</label>
-        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="100" id="velocitySensitivitySlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Size</label>
+          <div class="slider-container" data-min="1" data-max="30" data-step="1" data-value="17" id="sizeSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="sizeSliderValue">17</div>
         </div>
-        <div class="slider-value" id="velocitySensitivitySliderValue">100%</div>
-      </div>
 
-      <div class="control-group">
-        <label>Particle Size</label>
-        <div class="slider-container" data-min="1" data-max="20" data-step="1" data-value="17" id="sizeSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Max Count</label>
+          <div class="slider-container" data-min="1" data-max="500" data-step="1" data-value="220" id="densitySlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="densitySliderValue">220</div>
         </div>
-        <div class="slider-value" id="sizeSliderValue">17</div>
-      </div>
 
-      <div class="control-group">
-        <label>Max Particle Count</label>
-        <div class="slider-container" data-min="1" data-max="500" data-step="1" data-value="120" id="densitySlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Base Generation Rate</label>
+          <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="18" id="genRateSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="genRateSliderValue">18/s</div>
         </div>
-        <div class="slider-value" id="densitySliderValue">120</div>
-      </div>
 
-      <div class="control-group">
-        <label>Base Generation Rate</label>
-        <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="21" id="genRateSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Travel Distance</label>
+          <div class="slider-container" data-min="1000" data-max="8000" data-step="100" data-value="3500" id="travelSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="travelSliderValue">4000</div>
         </div>
-        <div class="slider-value" id="genRateSliderValue">16/s</div>
-      </div>
 
-      <div class="control-group">
-        <label>Travel Distance</label>
-        <div class="slider-container" data-min="1000" data-max="5000" data-step="100" data-value="4000" id="travelSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Spawn Area Size</label>
+          <div class="slider-container" data-min="1" data-max="5" data-step="0.1" data-value="3.0" id="spawnSizeSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="spawnSizeSliderValue">3.0</div>
         </div>
-        <div class="slider-value" id="travelSliderValue">4000</div>
-      </div>
 
-      <div class="control-group">
-        <label>Spawn Area Size</label>
-        <div class="slider-container" data-min="1" data-max="5" data-step="0.1" data-value="3.0" id="spawnSizeSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Motion Trail Length</label>
+          <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="23" id="trailLengthSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="trailLengthSliderValue">23</div>
         </div>
-        <div class="slider-value" id="spawnSizeSliderValue">3.0</div>
-      </div>
 
-      <div class="control-group">
-        <label>Motion Trail Length</label>
-        <div class="slider-container" data-min="0" data-max="30" data-step="1" data-value="23" id="trailLengthSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Motion Trail Size</label>
+          <div class="slider-container" data-min="0" data-max="100" data-step="5" data-value="70" id="trailSizeSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="trailSizeSliderValue">70%</div>
         </div>
-        <div class="slider-value" id="trailLengthSliderValue">23</div>
-      </div>
 
-      <div class="control-group">
-        <label>Motion Trail Size</label>
-        <div class="slider-container" data-min="0" data-max="100" data-step="5" data-value="70" id="trailSizeSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Fade In Time</label>
+          <div class="slider-container" data-min="0.1" data-max="5" data-step="0.1" data-value="1.7" id="fadeInTimeSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="fadeInTimeSliderValue">1.7s</div>
         </div>
-        <div class="slider-value" id="trailSizeSliderValue">70%</div>
-      </div>
 
-      <div class="control-group">
-        <label>Fade In Time</label>
-        <div class="slider-container" data-min="0.1" data-max="5" data-step="0.1" data-value="1.7" id="fadeInTimeSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Motion Trail Size Tapering</label>
+          <div class="slider-container" data-min="0" data-max="10" data-step="0.5" data-value="2" id="trailTaperSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="trailTaperSliderValue">2%</div>
         </div>
-        <div class="slider-value" id="fadeInTimeSliderValue">1.7s</div>
-      </div>
 
-      <div class="control-group">
-        <label>Motion Trail Size Tapering</label>
-        <div class="slider-container" data-min="0" data-max="10" data-step="0.5" data-value="2" id="trailTaperSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group">
+          <label>Motion Trail Opacity Tapering</label>
+          <div class="slider-container" data-min="0" data-max="100" data-step="5" data-value="85" id="trailOpacityTaperSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="trailOpacityTaperSliderValue">85%</div>
         </div>
-        <div class="slider-value" id="trailTaperSliderValue">2%</div>
-      </div>
 
-      <div class="control-group">
-        <label>Motion Trail Opacity Tapering</label>
-        <div class="slider-container" data-min="0" data-max="100" data-step="5" data-value="85" id="trailOpacityTaperSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group" style="display: none;">
+          <label>Side Boundary</label>
+          <div class="slider-container" data-min="0.1" data-max="3.0" data-step="0.1" data-value="0.1" id="boundarySlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="boundarySliderValue">0.1x</div>
         </div>
-        <div class="slider-value" id="trailOpacityTaperSliderValue">85%</div>
-      </div>
 
-      <div class="control-group" style="display: none;">
-        <label>Side Boundary</label>
-        <div class="slider-container" data-min="0.1" data-max="3.0" data-step="0.1" data-value="0.1" id="boundarySlider">
-          <div class="slider-fill"></div>
+        <div class="control-group" style="display: none;">
+          <label>Boundary Angle</label>
+          <div class="slider-container" data-min="0" data-max="45" data-step="1" data-value="44" id="boundaryAngleSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="boundaryAngleSliderValue">44°</div>
         </div>
-        <div class="slider-value" id="boundarySliderValue">0.1x</div>
-      </div>
 
-      <div class="control-group" style="display: none;">
-        <label>Boundary Angle</label>
-        <div class="slider-container" data-min="0" data-max="45" data-step="1" data-value="44" id="boundaryAngleSlider">
-          <div class="slider-fill"></div>
+        <div class="control-group" style="display: none;">
+          <label>Camera Opening</label>
+          <div class="slider-container" data-min="0.01" data-max="1.0" data-step="0.1" data-value="0.0" id="cameraOpeningSlider">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-value" id="cameraOpeningSliderValue">0.0x</div>
         </div>
-        <div class="slider-value" id="boundaryAngleSliderValue">44°</div>
-      </div>
-
-      <div class="control-group" style="display: none;">
-        <label>Camera Opening</label>
-        <div class="slider-container" data-min="0.01" data-max="1.0" data-step="0.1" data-value="0.0" id="cameraOpeningSlider">
-          <div class="slider-fill"></div>
-        </div>
-        <div class="slider-value" id="cameraOpeningSliderValue">0.0x</div>
       </div>
     </div>
   </div>
 
   <div id="plotTitle">ACE Near Real Time Data Stream</div>
+  <div id="plotLabels" style="position: fixed !important; top: 48px !important; right: 325px !important; text-align: right; width: 100px; height: 300px; color: #0cf; font-family: sans-serif; font-size: 12px; z-index: 11; pointer-events: none;">
+    <style>
+      .plot-label {
+        height: var(--plot-label-height, 42px);
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: flex-end;
+        text-align: right;
+      }
+      .plot-label:last-child {
+        height: var(--plot-label-last-height, 40px);
+        margin-bottom: 20px;
+      }
+    </style>
+    <div class="plot-label">Bx</div>
+    <div class="plot-label">By</div>
+    <div class="plot-label">Bz</div>
+    <div class="plot-label">Speed</div>
+    <div class="plot-label">Proton Dens</div>
+    <div class="plot-label">Temp</div>
+  </div>
   <canvas id="plotCanvas"></canvas>
+  <canvas id="progressCanvas" style="position: fixed !important; top: 324px !important; right: 21px !important; left: auto !important; width: 295px; height: 4px; z-index: 10;"></canvas>
+  <div id="loadingMessage" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0cf; font-size: 24px; text-align: center; font-family: Arial, sans-serif; z-index: 100; display: none;">
+    Attempting to load data, please check your internet connection...
+    <div id="countdown" style="font-size: 18px; margin-top: 10px; color: #0cf8;">
+      Retrying in <span id="countdownNumber">10</span>...
+    </div>
+    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+      <button id="retryNowBtn" style="padding: 8px 30px; background: #0cf; border: none; border-radius: 5px; color: black; cursor: pointer; font-size: 16px; height: 35px; width: 225px; transition: background 0.2s;">
+        Retry Now
+      </button>
+      <button id="useHistoricalBtn" style="padding: 8px 30px; background: #0cf; border: none; border-radius: 5px; color: black; cursor: pointer; font-size: 16px; height: 35px; width: 225px; transition: background 0.2s;">
+        Use Historical Data
+      </button>
+    </div>
+  </div>
+  </div>
   <div id="debug"></div>
   <div id="version-info">NOAA ACE Particle Visualization</div>
-  <div id="creator-info">Created by Robert Alexander: robert@auralab.io</div>
+  <div id="creator-info" style="position: fixed; left: 220px; bottom: 10px; color: rgba(255, 255, 255, 0.5); font-family: monospace; font-size: 11px; z-index: 10;">
+    Created by Robert Alexander: <a href="mailto:robert@auralab.io" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.2s;">robert@auralab.io</a>
+  </div>
+
+  <!-- Update both button styles -->
+  <div style="position: fixed !important; top: 335px !important; right: 20px !important; width: 300px; display: flex; justify-content: center; gap: 10px; z-index: 10;">
+    <button id="listenBtn" style="width: 110px; background: rgba(0, 204, 255, 0.2); border: 1px solid #0cf; color: #0cf; padding: 4px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
+      Listen to Space
+    </button>
+    <button id="forecastBtn" style="width: 110px; background: rgba(0, 204, 255, 0.2); border: 1px solid #0cf; color: #0cf; padding: 4px; border-radius: 5px; cursor: pointer; transition: background 0.2s;">
+      See Forecast
+    </button>
+  </div>
+
+  <!-- Add the forecast modal -->
+  <div id="forecastModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+    background: rgba(0, 0, 0, 0.7); border: 1px solid #0cf; border-radius: 10px; padding: 20px; 
+    max-width: 80%; max-height: 80%; overflow-y: auto; z-index: 1000;
+    opacity: 0; transition: opacity 0.5s ease-in-out;">
+    <div style="position: absolute; top: 10px; right: 10px; cursor: pointer; width: 24px; height: 24px; border: 2px solid #0cf; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0cf;">×</div>
+    <h2 id="forecastTitle" style="color: #0cf; margin-top: 0; margin-bottom: 5px;"></h2>
+    <h3 id="forecastDate" style="color: #0cf; opacity: 0.8; font-size: 0.9em; margin-top: 0; margin-bottom: 20px;"></h3>
+    <div id="forecastContent" style="color: #fff; font-family: monospace; white-space: pre-wrap;"></div>
+  </div>
+
+  <!-- Update the right position from 115px to 95px -->
+  <div id="noDataMessage" style="position: fixed !important; top: 170px !important; right: 100px !important; color: #0cf; font-family: Arial, sans-serif; font-size: 16px; z-index: 11; pointer-events: none; display: none;">
+    No data loaded...
+  </div>
 
 <script>
-// Add this back near the top of the script section
+// Comment out debug logging statements
 function clog(...args) {
-    console.log("debug:", ...args);
+    // console.log("debug:", ...args);
 }
 
 // ---------- Custom Slider Functions (Reusable) ----------
@@ -475,13 +590,13 @@ let spawner = {
         let lastSecond = Math.floor(this.lastSecondMark/1000);
         
         if (currentSecond > lastSecond) {
-            console.log(`%c🕐 ======= NEW SECOND ${currentSecond} =======\n   Active Particles: ${particles.length}/${maxParticles}\n   Spawned: ${this.spawnHistory.length}\n   Deaths: ${this.deathCount}\n   Net Change: ${this.spawnHistory.length - this.deathCount}`, 
-                'font-size: 16px; font-weight: bold; color: #0cf;');
+            // console.log(`%c🕐 ======= NEW SECOND ${currentSecond} =======\n   Active Particles: ${particles.length}/${maxParticles}\n   Spawned: ${this.spawnHistory.length}\n   Deaths: ${this.deathCount}\n   Net Change: ${this.spawnHistory.length - this.deathCount}`, 
+                // 'font-size: 16px; font-weight: bold; color: #0cf;');
             
             // Log all particle positions
-            console.log("Particle Positions:");
+            // console.log("Particle Positions:");
             particles.forEach((p, i) => {
-                clog(`  Particle ${i}: x=${p.pos.x.toFixed(1)}, y=${p.pos.y.toFixed(1)}, z=${p.pos.z.toFixed(1)}`);
+                // clog(`  Particle ${i}: x=${p.pos.x.toFixed(1)}, y=${p.pos.y.toFixed(1)}, z=${p.pos.z.toFixed(1)}`);
             });
             
             this.lastSecondMark = currentTime;
@@ -508,7 +623,7 @@ let spawner = {
             this.spawnHistory.push(currentTime);
             this.lastSpawnTime = currentTime;
             
-            clog(`[SPAWN] +1 particle (${particles.length}/${maxParticles}, Rate: ${this.spawnHistory.length}/${targetRate}/s)`);
+            // clog(`[SPAWN] +1 particle (${particles.length}/${maxParticles}, Rate: ${this.spawnHistory.length}/${targetRate}/s)`);
         }
     }
 };
@@ -561,15 +676,11 @@ class Particle {
     
     // 1. Check camera plane first
     if (this.pos.z > 5) {
-      spawner.deathCount++;
-      clog(`[PARTICLE] Terminated at z=${this.pos.z.toFixed(1)} - exceeded camera buffer (5)`);
       return true;
     }
     
     // 2. Check back wall
     if (this.pos.z < -travelDist) {
-      spawner.deathCount++;
-      clog(`[PARTICLE] Terminated at z=${this.pos.z.toFixed(1)} - exceeded back wall (-${travelDist})`);
       return true;
     }
     
@@ -585,8 +696,6 @@ class Particle {
     let currentWidth = (baseWidth * cameraOpening) + (baseWidth * (boundaryLimit - cameraOpening) * progress) + angleExpansion;
     
     if (Math.abs(this.pos.x) > currentWidth || Math.abs(this.pos.y) > currentWidth) {
-      spawner.deathCount++;
-      clog(`[PARTICLE] Terminated at x=${this.pos.x.toFixed(1)}, y=${this.pos.y.toFixed(1)} - exceeded angled boundary at z=${this.pos.z.toFixed(1)}`);
       return true;
     }
     
@@ -651,20 +760,32 @@ class Particle {
       }
   }
     mapTemperatureToColor(temp) {
-        let midTemp = minTemp + (maxTemp - minTemp) / 2;
+        // NEW COLOR MAP: Dark Blue -> Red -> Yellow -> White
+        let range = maxTemp - minTemp;
+        let firstThird = minTemp + range / 3;
+        let secondThird = minTemp + (2 * range) / 3;
         let col;
-        
-        if (temp < midTemp) {
+
+        if (temp < firstThird) {
+            // Dark Blue to Red
             col = lerpColor(
-                color(139, 0, 0),    // Dark red for coldest (using RGB values)
-                color(0, 0, 255),    // Blue for middle
-                map(temp, minTemp, midTemp, 0, 1)
+                color(0, 0, 139),     // Dark Blue
+                color(255, 0, 0),     // Red
+                map(temp, minTemp, firstThird, 0, 1)
+            );
+        } else if (temp < secondThird) {
+            // Red to Yellow
+            col = lerpColor(
+                color(255, 0, 0),     // Red
+                color(255, 255, 0),   // Yellow
+                map(temp, firstThird, secondThird, 0, 1)
             );
         } else {
+            // Yellow to White
             col = lerpColor(
-                color(0, 0, 255),    // Blue for middle
-                color(255, 255, 255), // White for hottest
-                map(temp, midTemp, maxTemp, 0, 1)
+                color(255, 255, 0),   // Yellow
+                color(255, 255, 255), // White
+                map(temp, secondThird, maxTemp, 0, 1)
             );
         }
         return col;
@@ -680,9 +801,31 @@ function updateHistory(arr, value) {
 function updatePlots() {
   let canvas = document.getElementById("plotCanvas");
   let ctx = canvas.getContext("2d");
+  
+  // Make sure we're using the right dimensions
   canvas.width = canvas.clientWidth;
   canvas.height = canvas.clientHeight;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Check for no data
+  if (!magRecords || !swepamRecords || magRecords.length === 0 || swepamRecords.length === 0) {
+    // Fill background
+    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw "No data loaded..." message with better positioning
+    ctx.fillStyle = "#0cf";
+    ctx.font = "16px Arial"; // Slightly larger font
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("No data loaded...", canvas.width/2, canvas.height/2);
+    
+    // Draw border to match normal plot style
+    ctx.strokeStyle = "#0cf";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
 
   let numPlots = 6;
   let gap = 5;
@@ -694,13 +837,39 @@ function updatePlots() {
   drawPlot(ctx, speedHistory, 0, 3 * (plotHeight + gap), canvas.width, plotHeight, "Vel");
   drawPlot(ctx, densityHistory, 0, 4 * (plotHeight + gap), canvas.width, plotHeight, "Dens");
   drawPlot(ctx, temperatureHistory, 0, 5 * (plotHeight + gap), canvas.width, plotHeight, "Temp");
+
+  // Draw progress indicator on separate canvas
+  let progressCanvas = document.getElementById("progressCanvas");
+  let pctx = progressCanvas.getContext("2d");
+  progressCanvas.width = progressCanvas.clientWidth;
+  progressCanvas.height = progressCanvas.clientHeight;
+  
+  let progress = currentRecordIndex / totalRecords;
+  pctx.clearRect(0, 0, progressCanvas.width, progressCanvas.height);
+  pctx.beginPath();
+  pctx.strokeStyle = 'white';
+  pctx.lineWidth = 2;
+  pctx.moveTo(0, progressCanvas.height/2);
+  pctx.lineTo(progressCanvas.width * progress, progressCanvas.height/2);
+  pctx.stroke();
 }
 
 function drawPlot(ctx, dataArray, x, y, w, h, label) {
   ctx.fillStyle = "rgba(0,0,0,0.8)";
   ctx.fillRect(x, y, w, h);
-  if (dataArray.length < 2) return;
 
+  // Draw divider line after each plot (except the last one)
+  if (label !== "Temp") {
+    ctx.strokeStyle = "rgba(0, 204, 255, 0.4)"; // #0cf at 40% opacity
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y + h + 2);  // 2px gap from plot bottom
+    ctx.lineTo(x + w, y + h + 2);
+    ctx.stroke();
+  }
+
+  if (dataArray.length < 2) return;
+  
   let range = computeRange(dataArray);
   let minVal = range.min;
   let maxVal = range.max;
@@ -719,9 +888,21 @@ function drawPlot(ctx, dataArray, x, y, w, h, label) {
 
   ctx.fillStyle = plotColors[label] || "white";
   ctx.font = "12px sans-serif";
-  ctx.textAlign = "right";  // Right-align the text
+  ctx.textAlign = "right";
   let value = dataArray[dataArray.length-1];
-  let text = `${label}: ${label === "Temp" ? value.toFixed(0) : value.toFixed(2)}`;
+  let text;
+  
+  // Add handling for magnetic field values
+  if (label === "Bx" || label === "By" || label === "Bz") {
+    text = `${value.toFixed(2)}`;  // Just show the number with 2 decimal places
+  } else if (label === "Vel") {
+    text = `${value.toFixed(2)} km/s`;
+  } else if (label === "Dens") {
+    text = `${value.toFixed(2)} p/cc`;
+  } else if (label === "Temp") {
+    text = `${Math.round(value).toLocaleString()} K`;
+  }
+  
   ctx.fillText(text, x + w - 5, y + 15);
 }
 
@@ -764,61 +945,163 @@ function updateParticles() {
 }
 
 // ---------- p5.js Functions ----------
-async function preload() {
-  clog("Preloading data files...");
+let countdownInterval;
+
+let retryDelay = 10; // Initial delay in seconds
+
+function startCountdown() {
+  let count = retryDelay;
+  const countdownElement = document.getElementById('countdownNumber');
+  
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    count--;
+    countdownElement.textContent = count;
+    
+    if (count <= 0) {
+      clearInterval(countdownInterval);
+      retryDelay += 10; // Increase delay for next retry
+      count = retryDelay;
+      countdownElement.textContent = count;
+      preload(); // Retry loading
+    }
+  }, 1000);
+}
+
+async function loadHistoricalData() {
   try {
-    // Wait for both files to load
+    // Change the message text first
+    document.getElementById('noDataMessage').textContent = "Historical data";
+    document.getElementById('noDataMessage').style.display = "block";
+
     const [magResponse, swepamResponse] = await Promise.all([
-      fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt'),
-      fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
+      fetch('ace-magnetometer.txt'),
+      fetch('ace-swepam.txt')
     ]);
 
-    // Get the text from both responses
+    if (!magResponse.ok || !swepamResponse.ok) {
+      throw new Error('Failed to load historical data files');
+    }
+
     const [magText, swepamText] = await Promise.all([
       magResponse.text(),
       swepamResponse.text()
     ]);
 
-    // Parse the data
     magDataRaw = magText.split('\n');
     swepamDataRaw = swepamText.split('\n');
     
-    // Parse records immediately
     magRecords = parseMagData(magDataRaw);
     swepamRecords = parseSWEData(swepamDataRaw);
-    
-    // Update total records
     totalRecords = Math.min(magRecords.length, swepamRecords.length);
     
-    // Find first valid record
-    for (let i = 0; i < magRecords.length; i++) {
-      if (magRecords[i].Bx !== -999.9) {
-        currentRecordIndex = i;
-        break;
-      }
-    }
+    clearInterval(countdownInterval);
+    document.getElementById('loadingMessage').style.display = 'none';
+  } catch (error) {
+    // On error, revert the message back
+    document.getElementById('noDataMessage').textContent = "No data loaded...";
+    alert("Failed to load historical data. Please try again later.");
+  }
+}
 
-    // Set up auto-refresh
-    setInterval(async () => {
-      const [newMagResponse, newSwepamResponse] = await Promise.all([
-        fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt'),
-        fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
-      ]);
-      
-      const [newMagText, newSwepamText] = await Promise.all([
-        newMagResponse.text(),
-        newSwepamResponse.text()
-      ]);
+// Add these global variables at the top
+let cachedForecastContent = null;
+let cachedOutlookContent = null;
+let cachedForecastDate = null;
+let cachedOutlookTitle = null;
 
-      magDataRaw = newMagText.split('\n');
-      swepamDataRaw = newSwepamText.split('\n');
-      magRecords = parseMagData(magDataRaw);
-      swepamRecords = parseSWEData(swepamDataRaw);
-      totalRecords = Math.min(magRecords.length, swepamRecords.length);
-    }, 60000);
+// Add this function to fetch forecast data
+async function fetchForecastData() {
+  try {
+    const [forecastResponse, outlookResponse] = await Promise.all([
+      fetch('https://services.swpc.noaa.gov/text/weekly.txt'),
+      fetch('https://services.swpc.noaa.gov/text/advisory-outlook.txt')
+    ]);
+    
+    const [forecastText, outlookText] = await Promise.all([
+      forecastResponse.text(),
+      outlookResponse.text()
+    ]);
+    
+    // Process forecast
+    const forecastStart = forecastText.indexOf('Forecast of Solar and Geomagnetic Activity');
+    cachedForecastDate = forecastText.substr(forecastStart).match(/(\d+ \w+ - \d+ \w+ \d+)/)[1];
+    cachedForecastContent = forecastText.substr(forecastStart).split('\n').slice(2).join('\n');
+    
+    // Process outlook
+    const outlookStart = outlookText.indexOf('Outlook For');
+    const outlookLines = outlookText.substr(outlookStart).split('\n');
+    cachedOutlookTitle = outlookLines[0];
+    cachedOutlookContent = outlookLines.slice(2, 3).join('\n').trim();
+  } catch (error) {
+    console.error('Error pre-fetching forecast:', error);
+  }
+}
+
+// Modify preload to include forecast fetch
+async function preload() {
+  console.log("Starting preload...");
+  try {
+    // Fetch both ACE data and forecast data in parallel
+    await Promise.all([
+      (async () => {
+        const [magResponse, swepamResponse] = await Promise.all([
+          fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt'),
+          fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
+        ]);
+
+        const [magText, swepamText] = await Promise.all([
+          magResponse.text(),
+          swepamResponse.text()
+        ]);
+
+        magDataRaw = magText.split('\n');
+        swepamDataRaw = swepamText.split('\n');
+        
+        magRecords = parseMagData(magDataRaw);
+        swepamRecords = parseSWEData(swepamDataRaw);
+        
+        // Update total records
+        totalRecords = Math.min(magRecords.length, swepamRecords.length);
+        
+        // Find first valid record
+        for (let i = 0; i < magRecords.length; i++) {
+          if (magRecords[i].Bx !== -999.9) {
+            currentRecordIndex = i;
+            break;
+          }
+        }
+
+        // Set up auto-refresh
+        setInterval(async () => {
+          const [newMagResponse, newSwepamResponse] = await Promise.all([
+            fetch('https://services.swpc.noaa.gov/text/ace-magnetometer.txt'),
+            fetch('https://services.swpc.noaa.gov/text/ace-swepam.txt')
+          ]);
+          
+          const [newMagText, newSwepamText] = await Promise.all([
+            newMagResponse.text(),
+            newSwepamResponse.text()
+          ]);
+
+          magDataRaw = newMagText.split('\n');
+          swepamDataRaw = newSwepamText.split('\n');
+          magRecords = parseMagData(magDataRaw);
+          swepamRecords = parseSWEData(swepamDataRaw);
+          totalRecords = Math.min(magRecords.length, swepamRecords.length);
+        }, 60000);
+
+        clearInterval(countdownInterval);
+        document.getElementById('loadingMessage').style.display = 'none';
+      })(),
+      fetchForecastData() // Fetch forecast data in parallel
+    ]);
 
   } catch (error) {
-    clog("Error in preload:", error);
+    console.error("Error in preload:", error);
+    document.getElementById('loadingMessage').style.display = "block";
+    document.getElementById('noDataMessage').style.display = "block";
+    startCountdown();
   }
 }
 
@@ -845,14 +1128,14 @@ function setup() {
   let sideLimit = width * spawnAreaSize * boundaryLimit / 2;
   let travelDist = getSliderValue("travelSlider");
   
-  console.log("%c=== Particle Termination Conditions ===", 'font-size: 14px; font-weight: bold; color: #f00;');
-  console.log(`Camera Position: (0, 0, 0) looking down -Z axis`);
-  console.log(`Spawn Location: x=random(±${sideLimit.toFixed(0)}), y=random(±${sideLimit.toFixed(0)}), z=${-travelDist} (back wall)`);
-  console.log(`Movement Direction: Particles move from back wall (z=${-travelDist}) toward camera (z=0)`);
-  console.log(`1. Front wall (camera): z > ${cameraBuffer} units (allows trails to be visible)`);
-  console.log(`2. Side boundaries: Angled walls from ±${(width * spawnAreaSize/2).toFixed(0)} at camera to ±${sideLimit.toFixed(0)} at back (${boundaryLimit}x)`);
-  console.log(`3. Back wall: z < ${-travelDist} units (spawn plane)`);
-  console.log("=================================");
+  // console.log("%c=== Particle Termination Conditions ===", 'font-size: 14px; font-weight: bold; color: #f00;');
+  // console.log(`Camera Position: (0, 0, 0) looking down -Z axis`);
+  // console.log(`Spawn Location: x=random(±${sideLimit.toFixed(0)}), y=random(±${sideLimit.toFixed(0)}), z=${-travelDist} (back wall)`);
+  // console.log(`Movement Direction: Particles move from back wall (z=${-travelDist}) toward camera (z=0)`);
+  // console.log(`1. Front wall (camera): z > ${cameraBuffer} units (allows trails to be visible)`);
+  // console.log(`2. Side boundaries: Angled walls from ±${(width * spawnAreaSize/2).toFixed(0)} at camera to ±${sideLimit.toFixed(0)} at back (${boundaryLimit}x)`);
+  // console.log(`3. Back wall: z < ${-travelDist} units (spawn plane)`);
+  // console.log("=================================");
 
   // Parse data
   if (magDataRaw && magDataRaw.length > 0) {
@@ -900,6 +1183,13 @@ function setup() {
 
 
 function draw() {
+  background(0);
+  
+  // Simple check - if no data, just return
+  if (!magRecords || !swepamRecords || magRecords.length === 0 || swepamRecords.length === 0) {
+    return;
+  }
+
   // Update control variables
   dataRate = getSliderValue("dataRateSlider");
   relSpeed = getSliderValue("relSpeedSlider");
@@ -930,12 +1220,18 @@ function draw() {
     let idx = floor(currentRecordIndex);
     let sweRec = swepamRecords[idx];
     if (sweRec) {
-        simSpeed = (sweRec.bulkSpeed !== -9999.9) ? sweRec.bulkSpeed : currentSpeed;
-        simDensity = (sweRec.protonDensity !== -9999.9) ? sweRec.protonDensity : simDensity;
-        simTemperature = (sweRec.ionTemp !== -1.00e+05) ? sweRec.ionTemp : currentTemperature;
+        // Apply clipping to the values
+        simSpeed = (sweRec.bulkSpeed !== -9999.9) ? 
+          clipToRange(sweRec.bulkSpeed, FIXED_RANGES.SPEED.min, FIXED_RANGES.SPEED.max, true) : currentSpeed;
+        
+        simDensity = (sweRec.protonDensity !== -9999.9) ? 
+          clipToRange(sweRec.protonDensity, FIXED_RANGES.DENSITY.min, FIXED_RANGES.DENSITY.max) : simDensity;
+        
+        simTemperature = (sweRec.ionTemp !== -1.00e+05) ? 
+          clipToRange(sweRec.ionTemp, FIXED_RANGES.TEMPERATURE.min, FIXED_RANGES.TEMPERATURE.max) : currentTemperature;
         
         updateHistory(speedHistory, simSpeed);
-        updateHistory(densityHistory,simDensity);
+        updateHistory(densityHistory, simDensity);
         updateHistory(temperatureHistory, simTemperature);
     }
   }
@@ -970,10 +1266,10 @@ function draw() {
   background(0);
   camera(0, 0, 0, 0, 0, -1000, 0, 1, 0); // Look down -Z axis
 
-  // Advance record index (if playing)
+  // Update the record index advancement in the draw function
   if (playing && totalRecords > 0) {
     if (streamMode === 'all') {
-      currentRecordIndex += dataRate / 60.0; // Assuming ~60fps
+      currentRecordIndex += dataRate / 60; // Advance by dataRate records per second
       if (currentRecordIndex >= totalRecords) currentRecordIndex = 0;
     } else {
       // Find most recent valid data point
@@ -998,7 +1294,7 @@ function draw() {
     // Check if particle needs to reset
     if (p.pos.z >= travelDistance) {  // Particle hit the far camera plane
         particles.splice(i, 1);
-        clog(`Removed particle at camera plane (Count: ${particles.length})`);
+        // clog(`Removed particle at camera plane (Count: ${particles.length})`);
     } else {
       p.show(particleSize);
     }
@@ -1007,26 +1303,25 @@ function draw() {
 
   // Replace the existing debug logging with more detailed particle system status
   if (frameCount % 100 === 0) {
-    clog("=== Particle System Status ===");
-    clog(`Generation Rate: ${particleGenRate} particles/sec`);
-    clog(`Current Particle Count: ${particles.length}`);
-    clog(`Target Count: ${densityFactor}`);
-    clog(`Last Generation: ${millis() - lastParticleTime}ms ago`);
-    clog(`Current Frame: ${frameCount}`);
-    clog(`Record: ${floor(currentRecordIndex)} Date: ${simDateStr}`);
-    clog("===========================");
+    // clog("=== Particle System Status ===");
+    // clog(`Generation Rate: ${particleGenRate} particles/sec`);
+    // clog(`Current Particle Count: ${particles.length}`);
+    // clog(`Target Count: ${densityFactor}`);
+    // clog(`Last Generation: ${millis() - lastParticleTime}ms ago`);
+    // clog(`Current Frame: ${frameCount}`);
+    // clog(`Record: ${floor(currentRecordIndex)} Date: ${simDateStr}`);
+    // clog("===========================");
   }
 
-    let dbgText = "Frame: " + frameCount + "<br>" +
+    let dbgText = "Date/Time: " + simDateStr + " (UTC)<br>" +
         "Record: " + floor(currentRecordIndex) + " / " + totalRecords + "<br>" +
-        "Date/Time: " + simDateStr + " (UTC)<br>" +
         "Bx, By, Bz: " + ((magRecords.length > 0 && magRecords[floor(currentRecordIndex)]) ?
             magRecords[floor(currentRecordIndex)].Bx.toFixed(2) + ", " +
             magRecords[floor(currentRecordIndex)].By.toFixed(2) + ", " +
             magRecords[floor(currentRecordIndex)].Bz.toFixed(2) : "N/A") + "<br>" +
-        "Bulk Speed: " + simSpeed.toFixed(2) + "<br>" +
-        "Density: " + simDensity.toFixed(2) + "<br>" +
-        "Ion Temp: " + simTemperature.toFixed(2) + "<br>" +
+        "Speed: " + simSpeed.toFixed(2) + " km/s<br>" +
+        "Proton Dens: " + simDensity.toFixed(2) + " p/cc<br>" +
+        "Temp: " + simTemperature.toFixed(2) + " K<br>" +
         "Data Rate: " + dataRate.toFixed(2) + " rec/sec, Rel Speed: " + relSpeed.toFixed(2) + "<br>" +
         "Speed Sens: " + (speedSensitivity * 100).toFixed(0) + "%, Mag Field Sens: " + (velocitySensitivity*100).toFixed(0) + "%<br>"+
         "Smoothing: " + smoothingFactor.toFixed(2) + ", Particle Size: " + particleSize.toFixed(2) + "<br>" +
@@ -1041,26 +1336,58 @@ function draw() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight, WEBGL);
-  clog("Window resized:", windowWidth, windowHeight);
+  // clog("Window resized:", windowWidth, windowHeight);
 }
 
 // ---------- UI Button Listeners ----------
-document.getElementById("playBtn").addEventListener("click", () => {
-  playing = true;
-  loop();
-});
-document.getElementById("pauseBtn").addEventListener("click", () => {
-  playing = false;
-  noLoop();
+document.getElementById("playPauseBtn").addEventListener("click", () => {
+  playing = !playing;
+  if (playing) {
+    document.getElementById("playPauseBtn").textContent = "Pause";
+    loop();
+  } else {
+    document.getElementById("playPauseBtn").textContent = "Play";
+    noLoop();
+  }
 });
 document.getElementById("resetBtn").addEventListener("click", () => {
-  particles = []; // Clear particles
-  currentRecordIndex = 0; // Reset to start
-  adjustParticleCount(getSliderValue("densitySlider")); // Recreate based on current density
-  // Reset other parameters to their initial states if needed
+  // Reset visualization state
+  particles = [];
+  currentRecordIndex = 0;
   currentDir = createVector(1,0,0);
   currentSpeed = 1;
   currentTemperature = 30000;
+
+  // Reset all sliders to their default values
+  const defaultValues = {
+    "dataRateSlider": 4.00,
+    "smoothingSlider": 0.90,
+    "relSpeedSlider": 1.2,
+    "speedSensitivitySlider": 50,
+    "velocitySensitivitySlider": 80,
+    "sizeSlider": 17,
+    "densitySlider": 220,
+    "genRateSlider": 18,
+    "travelSlider": 4000,
+    "spawnSizeSlider": 3.0,
+    "trailLengthSlider": 23,
+    "trailSizeSlider": 70,
+    "fadeInTimeSlider": 1.7,
+    "trailTaperSlider": 2,
+    "trailOpacityTaperSlider": 85
+  };
+
+  // Update each slider
+  Object.entries(defaultValues).forEach(([sliderId, value]) => {
+    const slider = document.getElementById(sliderId);
+    if (slider) {
+      slider.dataset.value = value;
+      initSlider(sliderId); // Re-initialize to update visual state
+    }
+  });
+
+  // Recreate particles based on reset density
+  adjustParticleCount(defaultValues.densitySlider);
 });
 
 let guiTimeout;
@@ -1101,21 +1428,28 @@ document.getElementById("modeBtn").addEventListener("click", () => {
   }
 });
 
-// Add this function near the other GUI fade functions
+// Update the handleClickOutside function to handle clicks better
 function handleClickOutside(event) {
     const gui = document.getElementById('gui');
+    const forecastBtn = document.getElementById('forecastBtn');
+    const forecastModal = document.getElementById('forecastModal');
+    const plotCanvas = document.getElementById('plotCanvas');
+    
+    // Ignore clicks on UI elements
+    if (gui.contains(event.target) || 
+        forecastBtn.contains(event.target) || 
+        forecastModal.contains(event.target) ||
+        plotCanvas.contains(event.target)) {
+        return;
+    }
+
+    // Toggle GUI visibility
     if (gui.classList.contains('fade-out')) {
-        // If controls are hidden, show them (unless clicking on controls)
-        if (!gui.contains(event.target)) {
-            resetGuiFade();
-        }
+        resetGuiFade();
     } else {
-        // If controls are visible, hide them when clicking outside
-        if (!gui.contains(event.target)) {
-            gui.classList.add('fade-out');
-            if (guiTimeout) {
-                clearTimeout(guiTimeout);
-            }
+        gui.classList.add('fade-out');
+        if (guiTimeout) {
+            clearTimeout(guiTimeout);
         }
     }
 }
@@ -1132,7 +1466,7 @@ function computeRange(arr) {
 
 // Data parsing functions
 function parseMagData(lines) {
-    clog("Parsing magnetometer data...");
+    // clog("Parsing magnetometer data...");
     let records = [];
     for (let line of lines) {
         if (line.startsWith("#") || line.trim() === "") continue;
@@ -1155,20 +1489,36 @@ function parseMagData(lines) {
         };
         records.push(rec);
     }
-    clog("Parsed magnetometer records:", records.length);
+    // clog("Parsed magnetometer records:", records.length);
     return records;
 }
 
+// Add this new function
+function updateTemperatureRange(records) {
+    if (useDynamicRanges) {
+        let validTemps = records.filter(rec => rec.ionTemp !== -1.00e+05).map(rec => rec.ionTemp);
+        if (validTemps.length > 0) {
+            minTemp = Math.min(...validTemps);
+            maxTemp = Math.max(...validTemps);
+            // clog("Temperature range updated (dynamic):", minTemp, "to", maxTemp);
+        }
+    } else {
+        minTemp = FIXED_RANGES.TEMPERATURE.min;
+        maxTemp = FIXED_RANGES.TEMPERATURE.max;
+        // clog("Temperature range set (fixed):", minTemp, "to", maxTemp);
+    }
+}
+
+// Update the parseSWEData function to use this
 function parseSWEData(lines) {
-    clog("Parsing swepam data...");
+    // clog("Parsing swepam data...");
     let records = [];
-    let validTemps = [];
     
     for (let line of lines) {
         if (line.startsWith("#") || line.trim() === "") continue;
         let tokens = line.trim().split(/\s+/);
         if (tokens.length < 10) continue;
-        let rec = {
+        records.push({
             year: parseInt(tokens[0]), 
             month: parseInt(tokens[1]), 
             day: parseInt(tokens[2]),
@@ -1179,24 +1529,11 @@ function parseSWEData(lines) {
             protonDensity: parseFloat(tokens[7]),
             bulkSpeed: parseFloat(tokens[8]), 
             ionTemp: parseFloat(tokens[9])
-        };
-        
-        // Collect valid temperature readings
-        if (rec.ionTemp !== -1.00e+05) {
-            validTemps.push(rec.ionTemp);
-        }
-        
-        records.push(rec);
+        });
     }
     
-    // Calculate temperature range from valid readings
-    if (validTemps.length > 0) {
-        minTemp = Math.min(...validTemps);
-        maxTemp = Math.max(...validTemps);
-        clog("Temperature range:", minTemp, "to", maxTemp);
-    }
-    
-    clog("Parsed swepam records:", records.length);
+    updateTemperatureRange(records);
+    // clog("Parsed swepam records:", records.length);
     return records;
 }
 
@@ -1211,10 +1548,10 @@ document.addEventListener('keydown', (event) => {
         playing = !playing;
         if (playing) {
             loop();
-            console.log('%c▶️ Visualization Playing', 'color: #0f0; font-weight: bold;');
+            // console.log('%c▶️ Visualization Playing', 'color: #0f0; font-weight: bold;');
         } else {
             noLoop();
-            console.log('%c⏸️ Visualization Paused', 'color: #f90; font-weight: bold;');
+            // console.log('%c⏸️ Visualization Paused', 'color: #f90; font-weight: bold;');
         }
     }
 });
@@ -1282,6 +1619,163 @@ function drawBoundary() {
 
 // Add this constant near the top of the script section
 const SHOW_BOUNDARY_VISUALIZATION = false;  // Set to false to hide boundary grid
+
+// Add event listener for the historical data button
+document.getElementById('useHistoricalBtn').addEventListener('click', loadHistoricalData);
+
+// Update the retry button click handler
+document.getElementById('retryNowBtn').addEventListener('click', () => {
+  retryDelay = 10; // Reset to initial delay
+  document.getElementById('countdownNumber').textContent = retryDelay;
+  clearInterval(countdownInterval); // Clear existing countdown
+  preload(); // Try loading data immediately
+});
+
+// Add near the top with other global variables
+const FIXED_RANGES = {
+  DENSITY: { min: 0.1, max: 6 },       // p/cc
+  TEMPERATURE: { min: 10000, max: 300000 }, // K
+  SPEED: { min: 250, max: 650 }        // km/s, soft cap
+};
+let useDynamicRanges = false;  // Default to fixed ranges
+
+// Add new function for data clipping
+function clipToRange(value, min, max, softClip = false) {
+  if (softClip) {
+    // Soft clipping - only apply minimum
+    return Math.max(min, value);
+  }
+  // Hard clipping - apply both min and max
+  return Math.max(min, Math.min(max, value));
+}
+
+// Update the updateTemperatureRange function
+function updateTemperatureRange(records) {
+  if (useDynamicRanges) {
+    let validTemps = records.filter(rec => rec.ionTemp !== -1.00e+05).map(rec => rec.ionTemp);
+    if (validTemps.length > 0) {
+      minTemp = Math.min(...validTemps);
+      maxTemp = Math.max(...validTemps);
+      // clog("Temperature range updated (dynamic):", minTemp, "to", maxTemp);
+    }
+  } else {
+    minTemp = FIXED_RANGES.TEMPERATURE.min;
+    maxTemp = FIXED_RANGES.TEMPERATURE.max;
+    // clog("Temperature range set (fixed):", minTemp, "to", maxTemp);
+  }
+}
+
+// Update the data processing in draw()
+if (swepamRecords.length > 0) {
+  let idx = floor(currentRecordIndex);
+  let sweRec = swepamRecords[idx];
+  if (sweRec) {
+    // Apply clipping to the values
+    simSpeed = (sweRec.bulkSpeed !== -9999.9) ? 
+      clipToRange(sweRec.bulkSpeed, FIXED_RANGES.SPEED.min, FIXED_RANGES.SPEED.max, true) : currentSpeed;
+    
+    simDensity = (sweRec.protonDensity !== -9999.9) ? 
+      clipToRange(sweRec.protonDensity, FIXED_RANGES.DENSITY.min, FIXED_RANGES.DENSITY.max) : simDensity;
+    
+    simTemperature = (sweRec.ionTemp !== -1.00e+05) ? 
+      clipToRange(sweRec.ionTemp, FIXED_RANGES.TEMPERATURE.min, FIXED_RANGES.TEMPERATURE.max) : currentTemperature;
+    
+    updateHistory(speedHistory, simSpeed);
+    updateHistory(densityHistory, simDensity);
+    updateHistory(temperatureHistory, simTemperature);
+  }
+}
+
+// Then update the data advancement logic to be independent
+let lastDataUpdate = 0;
+
+function updateDataStream() {
+  if (!playing || totalRecords === 0) return;
+
+  let currentTime = millis();
+  let dataRate = getSliderValue("dataRateSlider");
+  let updateInterval = 1000 / dataRate; // ms per record
+
+  if (currentTime - lastDataUpdate >= updateInterval) {
+    if (streamMode === 'all') {
+      currentRecordIndex++;
+      if (currentRecordIndex >= totalRecords) currentRecordIndex = 0;
+    } else {
+      // Find most recent valid data point...
+      let idx = totalRecords - 1;
+      while (idx > 0 && 
+             (magRecords[idx].Bx === -999.9 || 
+              magRecords[idx].By === -999.9 || 
+              magRecords[idx].Bz === -999.9 || 
+              swepamRecords[idx].bulkSpeed === -9999.9 || 
+              swepamRecords[idx].protonDensity === -9999.9 || 
+              swepamRecords[idx].ionTemp === -1.00e+05)) {
+        idx--;
+      }
+      currentRecordIndex = idx;
+    }
+    lastDataUpdate = currentTime;
+  }
+}
+
+// Update the forecast fetch and display code
+document.getElementById('forecastBtn').addEventListener('click', () => {
+  const modal = document.getElementById('forecastModal');
+  const forecastBtn = document.getElementById('forecastBtn');
+  
+  if (modal.style.display === 'block') {
+    modal.style.opacity = '0';
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 500);
+    forecastBtn.textContent = 'See Forecast';
+    return;
+  }
+
+  forecastBtn.textContent = 'Hide Forecast';
+  
+  // Show modal first with opacity 0
+  modal.style.display = 'block';
+  // Force browser reflow
+  modal.offsetHeight;
+  // Then fade in
+  modal.style.opacity = '1';
+  
+  // Use cached data
+  document.getElementById('forecastTitle').textContent = 'Forecast of Solar and Geomagnetic Activity';
+  document.getElementById('forecastDate').textContent = cachedForecastDate || '';
+  document.getElementById('forecastContent').innerHTML = `${cachedForecastContent?.trim() || 'Loading forecast data...'}
+<h3 style="color: #0cf; opacity: 0.8; font-size: 1.1em; margin-top: 20px; margin-bottom: 10px;">${cachedOutlookTitle || ''}</h3>
+<div style="font-size: 1em;">${cachedOutlookContent || ''}</div>
+<div style="height: 1px;"></div>`;
+});
+
+// Update the X button click handler
+document.querySelector('#forecastModal > div').addEventListener('click', () => {
+  const modal = document.getElementById('forecastModal');
+  modal.style.opacity = '0';
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 500);
+  document.getElementById('forecastBtn').textContent = 'See Forecast';
+});
+
+// Update the outside click handler
+document.getElementById('forecastModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('forecastModal')) {
+    const modal = document.getElementById('forecastModal');
+    modal.style.opacity = '0';
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 500);
+    document.getElementById('forecastBtn').textContent = 'See Forecast';
+  }
+});
+
+// Add listen button handler
+document.getElementById('listenBtn').addEventListener('click', () => {
+  window.open('https://www.youtube.com/watch?v=j9A2MTB9gl0', '_blank');
+});
 </script>
 </body>
 </html>
