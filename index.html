@@ -626,7 +626,6 @@ let minTemp, maxTemp;
 let spawnAreaSize;
 let particlesCreatedTimes = []; // Array to track ALL particle creations (new OR respawn)
 const RATE_WINDOW = 50; // 50ms window for rate limiting
-let streamMode = 'all'; // 'all' or 'recent'
 
 // Add a new global variable for accumulation
 let particleAccumulator = 0;
@@ -973,7 +972,7 @@ function drawPlot(ctx, dataArray, x, y, w, h, label) {
     text = `${Math.round(value).toLocaleString()} K`;
   }
   
-  ctx.fillText(text, x + w - 5, y + 15);
+  ctx.fillText(text, x + w - 5, y + 12);  // Changed from y + 15 to y + 12
 }
 
 // ---------- Particle Management ----------
@@ -1040,9 +1039,9 @@ function startCountdown() {
 
 async function loadHistoricalData() {
   try {
-    // Change the message text first
-    document.getElementById('noDataMessage').textContent = "Historical data";
-    document.getElementById('noDataMessage').style.display = "block";
+    // Remove this line that shows "Historical data" message
+    // document.getElementById('noDataMessage').textContent = "Historical data";
+    // document.getElementById('noDataMessage').style.display = "block";
 
     const [magResponse, swepamResponse] = await Promise.all([
       fetch('ace-magnetometer.txt'),
@@ -1068,7 +1067,7 @@ async function loadHistoricalData() {
     clearInterval(countdownInterval);
     document.getElementById('loadingMessage').style.display = 'none';
   } catch (error) {
-    // On error, revert the message back
+    // On error, show the no data message
     document.getElementById('noDataMessage').textContent = "No data loaded...";
     alert("Failed to load historical data. Please try again later.");
   }
@@ -1290,19 +1289,25 @@ function draw() {
     let idx = floor(currentRecordIndex);
     let sweRec = swepamRecords[idx];
     if (sweRec) {
-        // Apply clipping to the values
+        // First store values for plotting/display only (use previous value if invalid)
+        let plotSpeed = (sweRec.bulkSpeed !== -9999.9) ? sweRec.bulkSpeed : speedHistory[speedHistory.length - 1] || 0;
+        let plotDensity = (sweRec.protonDensity !== -9999.9) ? sweRec.protonDensity : densityHistory[densityHistory.length - 1] || 0;
+        let plotTemp = (sweRec.ionTemp !== -1.00e+05) ? sweRec.ionTemp : temperatureHistory[temperatureHistory.length - 1] || 0;
+        
+        // Always update histories with either new or previous values
+        updateHistory(speedHistory, plotSpeed);
+        updateHistory(densityHistory, plotDensity);
+        updateHistory(temperatureHistory, plotTemp);
+
+        // Keep original particle behavior code exactly as-is
         simSpeed = (sweRec.bulkSpeed !== -9999.9) ? 
-          clipToRange(sweRec.bulkSpeed, FIXED_RANGES.SPEED.min, FIXED_RANGES.SPEED.max, true) : currentSpeed;
+            clipToRange(sweRec.bulkSpeed, FIXED_RANGES.SPEED.min, FIXED_RANGES.SPEED.max, true) : currentSpeed;
         
         simDensity = (sweRec.protonDensity !== -9999.9) ? 
-          clipToRange(sweRec.protonDensity, FIXED_RANGES.DENSITY.min, FIXED_RANGES.DENSITY.max) : simDensity;
+            clipToRange(sweRec.protonDensity, FIXED_RANGES.DENSITY.min, FIXED_RANGES.DENSITY.max) : simDensity;
         
         simTemperature = (sweRec.ionTemp !== -1.00e+05) ? 
-          clipToRange(sweRec.ionTemp, FIXED_RANGES.TEMPERATURE.min, FIXED_RANGES.TEMPERATURE.max) : currentTemperature;
-        
-        updateHistory(speedHistory, simSpeed);
-        updateHistory(densityHistory, simDensity);
-        updateHistory(temperatureHistory, simTemperature);
+            clipToRange(sweRec.ionTemp, FIXED_RANGES.TEMPERATURE.min, FIXED_RANGES.TEMPERATURE.max) : currentTemperature;
     }
   }
 
@@ -1338,22 +1343,22 @@ function draw() {
 
   // Update the record index advancement in the draw function
   if (playing && totalRecords > 0) {
-    if (streamMode === 'all') {
-      currentRecordIndex += dataRate / 60; // Advance by dataRate records per second
-      if (currentRecordIndex >= totalRecords) currentRecordIndex = 0;
-    } else {
-      // Find most recent valid data point
-      let idx = totalRecords - 1;
-      while (idx > 0 && 
-             (magRecords[idx].Bx === -999.9 || 
-              magRecords[idx].By === -999.9 || 
-              magRecords[idx].Bz === -999.9 || 
-              swepamRecords[idx].bulkSpeed === -9999.9 || 
-              swepamRecords[idx].protonDensity === -9999.9 || 
-              swepamRecords[idx].ionTemp === -1.00e+05)) {
-        idx--;
-      }
-      currentRecordIndex = idx;
+    if (streamMode === STREAM_MODES.REAL_TIME || streamMode === STREAM_MODES.HISTORICAL) {
+        currentRecordIndex += dataRate / 60;
+        if (currentRecordIndex >= totalRecords) currentRecordIndex = 0;
+    } else if (streamMode === STREAM_MODES.RECENT) {
+        // Find most recent valid data point
+        let idx = totalRecords - 1;
+        while (idx > 0 && 
+               (magRecords[idx].Bx === -999.9 || 
+                magRecords[idx].By === -999.9 || 
+                magRecords[idx].Bz === -999.9 || 
+                swepamRecords[idx].bulkSpeed === -9999.9 || 
+                swepamRecords[idx].protonDensity === -9999.9 || 
+                swepamRecords[idx].ionTemp === -1.00e+05)) {
+            idx--;
+        }
+        currentRecordIndex = idx;
     }
   }
 
@@ -1491,15 +1496,38 @@ document.getElementById('gui').addEventListener('mouseenter', resetGuiFade);
 // Initial timeout
 resetGuiFade();
 
-// Add with other button listeners
-document.getElementById("modeBtn").addEventListener("click", () => {
-  if (streamMode === 'all') {
-    streamMode = 'recent';
-    document.getElementById("modeBtn").textContent = 'Most Recent Valid Data';
-  } else {
-    streamMode = 'all';
-    document.getElementById("modeBtn").textContent = 'Stream All';
-  }
+// Add to global variables at top
+const STREAM_MODES = {
+    REAL_TIME: 'real_time',
+    RECENT: 'recent',
+    HISTORICAL: 'historical'
+};
+
+let streamMode = STREAM_MODES.REAL_TIME;
+
+// Update the mode button click handler
+document.getElementById("modeBtn").addEventListener("click", async () => {
+    switch (streamMode) {
+        case STREAM_MODES.REAL_TIME:
+            streamMode = STREAM_MODES.RECENT;
+            document.getElementById("modeBtn").textContent = 'Most Recent Valid';
+            document.getElementById('plotTitle').textContent = 'ACE Most Recent Valid Data';
+            break;
+            
+        case STREAM_MODES.RECENT:
+            streamMode = STREAM_MODES.HISTORICAL;
+            document.getElementById("modeBtn").textContent = 'Historical';
+            document.getElementById('plotTitle').textContent = 'ACE Historical Data';
+            await loadHistoricalData();
+            break;
+            
+        case STREAM_MODES.HISTORICAL:
+            streamMode = STREAM_MODES.REAL_TIME;
+            document.getElementById("modeBtn").textContent = 'Real Time';
+            document.getElementById('plotTitle').textContent = 'ACE Near Real Time Data Stream';
+            await preload(); // Reload real-time data
+            break;
+    }
 });
 
 // Update the handleClickOutside function to handle clicks better
@@ -1708,7 +1736,7 @@ document.getElementById('retryNowBtn').addEventListener('click', () => {
 // Add near the top with other global variables
 const FIXED_RANGES = {
   DENSITY: { min: 0.1, max: 6 },       // p/cc
-  TEMPERATURE: { min: 10000, max: 300000 }, // K
+  TEMPERATURE: { min: 10000, max: 400000 }, // K
   SPEED: { min: 250, max: 650 }        // km/s, soft cap
 };
 let useDynamicRanges = false;  // Default to fixed ranges
