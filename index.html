@@ -1736,7 +1736,7 @@ document.getElementById('retryNowBtn').addEventListener('click', () => {
 // Add near the top with other global variables
 const FIXED_RANGES = {
   DENSITY: { min: 0.1, max: 6 },       // p/cc
-  TEMPERATURE: { min: 10000, max: 500000 }, // K
+  TEMPERATURE: { min: 80000, max: 1000000 }, // K
   SPEED: { min: 250, max: 650 }        // km/s, soft cap
 };
 let useDynamicRanges = false;  // Default to fixed ranges
@@ -1847,8 +1847,10 @@ document.getElementById('forecastBtn').addEventListener('click', () => {
   document.getElementById('forecastTitle').textContent = 'Forecast of Solar and Geomagnetic Activity';
   document.getElementById('forecastDate').textContent = cachedForecastDate || '';
   document.getElementById('forecastContent').innerHTML = `${cachedForecastContent?.trim() || 'Loading forecast data...'}
+<!-- Outlook section temporarily hidden
 <h3 style="color: #0cf; opacity: 0.8; font-size: 1.1em; margin-top: 20px; margin-bottom: 10px;">${cachedOutlookTitle || ''}</h3>
 <div style="font-size: 1em;">${cachedOutlookContent || ''}</div>
+-->
 <div style="height: 1px;"></div>`;
 });
 
