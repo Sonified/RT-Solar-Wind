@@ -456,7 +456,7 @@
   </div>
   </div>
   <div id="debug"></div>
-  <div id="version-info">NOAA ACE Particle Visualization v1.00</div>
+  <div id="version-info">NOAA ACE Particle Visualization v1.01</div>
   <div id="creator-info" style="position: fixed; left: 220px; bottom: 10px; color: rgba(255, 255, 255, 0.5); font-family: monospace; font-size: 11px; z-index: 10;">
     Created by Robert Alexander: <a href="mailto:robert@auralab.io" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.2s;">robert@auralab.io</a>
   </div>
@@ -549,6 +549,7 @@ function initSlider(id) {
   }
   updateSlider(value);
 
+  // Mouse event handler
   slider.addEventListener('mousedown', (e) => {
     e.preventDefault();
     const rect = slider.getBoundingClientRect();
@@ -568,6 +569,29 @@ function initSlider(id) {
 
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
+  });
+
+  // Touch event handler for mobile
+  slider.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const rect = slider.getBoundingClientRect();
+
+    function onTouchMove(e) {
+      let touch = e.touches[0];
+      let pos = touch.clientX - rect.left;
+      let perc = Math.max(0, Math.min(1, pos / rect.width));
+      let newVal = min + perc * (max - min);
+      newVal = Math.round(newVal / step) * step; // Snap to step
+      updateSlider(newVal);
+    }
+
+    function onTouchEnd() {
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+    }
+
+    document.addEventListener('touchmove', onTouchMove);
+    document.addEventListener('touchend', onTouchEnd);
   });
 }
 
@@ -1216,9 +1240,9 @@ function setup() {
 
   // Version info
   console.log('%c═══════════════════════════════════════════════════════════', 'color: #0cf');
-  console.log('%c🌌 NOAA ACE Particle Visualization v1.00', 'color: #0cf; font-size: 16px; font-weight: bold;');
+  console.log('%c🌌 NOAA ACE Particle Visualization v1.01', 'color: #0cf; font-size: 16px; font-weight: bold;');
   console.log('%c═══════════════════════════════════════════════════════════', 'color: #0cf');
-  console.log('%cv1.00 Refactor: Optimized particle rendering system - reduced polygon count by 81%', 'color: #0f0');
+  console.log('%cv1.01 Added mobile touch support for control sliders', 'color: #0f0');
   console.log('%c═══════════════════════════════════════════════════════════', 'color: #0cf');
 
   // Initialize UI values (important to do this *before* creating particles)

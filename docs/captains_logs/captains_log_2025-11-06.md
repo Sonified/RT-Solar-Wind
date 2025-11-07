@@ -30,6 +30,40 @@ v1.00 Refactor: Optimized particle rendering system - reduced polygon count by 8
 
 ### Files Modified:
 - index.html: Complete rendering system refactor
+- docs/captains_logs/captains_log_2025-11-06.md: Created
+
+### Push Status:
+✅ Successfully pushed to GitHub (commit: 9d8ac67)
+
+**Next Steps:**
+- Monitor performance in production
+- Consider further optimizations if needed (e.g., spatial culling, LOD system)
+- Test across different devices/browsers
+
+---
+
+## Version: v1.01
+
+### Commit Message:
+v1.01 Added mobile touch support for control sliders
+
+### Changes Made:
+
+**Mobile Support:**
+- Added `touchstart`, `touchmove`, and `touchend` event listeners to all sliders
+- Sliders now respond to touch events on mobile devices (phones/tablets)
+- Previously only worked with mouse events (desktop only)
+
+**Technical Implementation:**
+- Touch events use `e.touches[0].clientX` for position tracking
+- Prevents default touch behavior to avoid scrolling while adjusting sliders
+- Maintains same slider logic as mouse events (snapping, value updates, visual feedback)
+
+### Files Modified:
+- index.html: Added touch event handlers to initSlider() function
+
+### Push Status:
+Pending...
 
 ---
 
