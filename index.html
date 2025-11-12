@@ -327,10 +327,10 @@
 
         <div class="control-group">
           <label>Base Generation Rate</label>
-          <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="18" id="genRateSlider">
+          <div class="slider-container" data-min="0" data-max="100" data-step="1" data-value="30" id="genRateSlider">
             <div class="slider-fill"></div>
           </div>
-          <div class="slider-value" id="genRateSliderValue">18/s</div>
+          <div class="slider-value" id="genRateSliderValue">30/s</div>
         </div>
 
         <div class="control-group">
@@ -456,7 +456,7 @@
   </div>
   </div>
   <div id="debug"></div>
-  <div id="version-info">NOAA ACE Particle Visualization v1.01</div>
+  <div id="version-info">NOAA ACE Particle Visualization v1.02</div>
   <div id="creator-info" style="position: fixed; left: 220px; bottom: 10px; color: rgba(255, 255, 255, 0.5); font-family: monospace; font-size: 11px; z-index: 10;">
     Created by Robert Alexander: <a href="mailto:robert@auralab.io" style="color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.2s;">robert@auralab.io</a>
   </div>
@@ -1240,9 +1240,9 @@ function setup() {
 
   // Version info
   console.log('%c═══════════════════════════════════════════════════════════', 'color: #0cf');
-  console.log('%c🌌 NOAA ACE Particle Visualization v1.01', 'color: #0cf; font-size: 16px; font-weight: bold;');
+  console.log('%c🌌 NOAA ACE Particle Visualization v1.02', 'color: #0cf; font-size: 16px; font-weight: bold;');
   console.log('%c═══════════════════════════════════════════════════════════', 'color: #0cf');
-  console.log('%cv1.01 Added mobile touch support for control sliders', 'color: #0f0');
+  console.log('%cv1.02 Update: Increased preset Base Generation Rate from 18 to 30 particles/second', 'color: #0f0');
   console.log('%c═══════════════════════════════════════════════════════════', 'color: #0cf');
 
   // Initialize UI values (important to do this *before* creating particles)
@@ -1517,7 +1517,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     "velocitySensitivitySlider": 80,
     "sizeSlider": 17,
     "densitySlider": 220,
-    "genRateSlider": 18,
+    "genRateSlider": 30,
     "travelSlider": 3500,
     "spawnSizeSlider": 2.7,
     "trailLengthSlider": 13,
